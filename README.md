@@ -126,3 +126,13 @@ PATCH /users/wolverine
 ```json
 1
 ```
+
+### Delete a new user by id
+#### *Request:* DELETE /users/:id
+```shell
+DELETE /users/wolverine
+```
+#### *Response:* 1: success, 0: not found, -1: error
+```json
+1
+```
