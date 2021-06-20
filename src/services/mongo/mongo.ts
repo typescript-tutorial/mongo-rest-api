@@ -121,7 +121,7 @@ export function patch<T>(collection: Collection, obj: T, idName?: string): Promi
         reject(err);
       } else {
         mapOne(obj, idName);
-        resolve(result.ok ? result.ok : 1);
+        resolve(result.ok);
       }
     });
   }));
@@ -137,7 +137,7 @@ export function update<T>(collection: Collection, obj: T, idName?: string): Prom
         reject(err);
       } else {
         mapOne(obj, idName);
-        resolve(result.ok ? result.ok : 1);
+        resolve(result.ok);
       }
     });
   }));
@@ -152,7 +152,7 @@ export function updateFields<T>(collection: Collection, object: T, arr: PushOper
       if (err) {
         return reject(err);
       } else {
-        return resolve(result.value ? result.value : (null as any));
+        return resolve(result.value);
       }
     });
   }));
@@ -163,7 +163,7 @@ export function updateByQuery<T>(collection: Collection, query: FilterQuery<T>, 
       if (err) {
         return reject(err);
       } else {
-        return resolve(result.value ? result.value : (null as any));
+        return resolve(result.value);
       }
     });
   }));
@@ -202,18 +202,9 @@ export function updateMany<T>(collection: Collection, objects: T[], idName?: str
     collection.bulkWrite(operations, (err, result: BulkWriteOpResultObject) => {
       if (err) {
         return reject(err);
+      } else {
+        return resolve(result.modifiedCount);
       }
-      let i = 0;
-      if (result.modifiedCount) {
-        i = i + result.modifiedCount;
-      }
-      if (result.upsertedCount) {
-        i = i + result.upsertedCount;
-      }
-      if (result.matchedCount) {
-        i = i + result.matchedCount;
-      }
-      return resolve(i);
     });
   }));
 }
@@ -231,7 +222,7 @@ export function upsert<T>(collection: Collection, object: T, idName?: string): P
           if (idName) {
             mapOne(obj, idName);
           }
-          resolve(result.ok ? result.ok : 1);
+          resolve(result.ok);
         }
       });
     }));
@@ -264,17 +255,7 @@ export function upsertMany<T>(collection: Collection, objects: T[], idName?: str
       if (err) {
         return reject(err);
       }
-      let i = 0;
-      if (result.modifiedCount) {
-        i = i + result.modifiedCount;
-      }
-      if (result.upsertedCount) {
-        i = i + result.upsertedCount;
-      }
-      if (result.matchedCount) {
-        i = i + result.matchedCount;
-      }
-      return resolve(i);
+      return resolve(result.insertedCount + result.modifiedCount + result.upsertedCount);
     });
   }));
 }
@@ -293,7 +274,7 @@ export function deleteById(collection: Collection, _id: any): Promise<number> {
     if (!_id) {
       return resolve(0);
     }
-    collection.deleteOne({ _id }, (err, result: DeleteWriteOpResultObject) => err ? reject(err) : resolve(result.deletedCount ? result.deletedCount : 1));
+    collection.deleteOne({ _id }, (err, result: DeleteWriteOpResultObject) => err ? reject(err) : resolve(result.deletedCount));
   }));
 }
 export function deleteByIds(collection: Collection, _ids: any[]): Promise<number> {
@@ -312,7 +293,7 @@ export function deleteByIds(collection: Collection, _ids: any[]): Promise<number
     },
     ];
     collection.bulkWrite(operations, (err, result: BulkWriteOpResultObject) => {
-      return err ? reject(err) : resolve(result.deletedCount ? result.deletedCount : 1);
+      return err ? reject(err) : resolve(result.deletedCount);
     });
   }));
 }
@@ -328,20 +309,24 @@ export function deleteFields<T>(collection: Collection, object: T, filter: PullO
       if (err) {
         return reject(err);
       } else {
-        return resolve(result.ok ? result.ok : 1);
+        return resolve(result.ok);
       }
     });
   }));
 }
-export function count(collection: Collection, query: any): Promise<number> {
+export function count<T>(collection: Collection, query: FilterQuery<T>): Promise<number> {
   return new Promise<number>((resolve, reject) => {
     collection.countDocuments(query, (err, result) => err ? reject(err) : resolve(result));
   });
 }
-export function findWithAggregate<T>(collection: Collection, query: any): Promise<T[]> {
+export function findWithAggregate<T>(collection: Collection, pipeline: object[]): Promise<T[]> {
   return new Promise<T[]>(((resolve, reject) => {
-    collection.aggregate(query, (error, result: AggregationCursor<T>) => {
-      result.toArray((err, items) => err ? reject(err) : resolve(items ? items : []));
+    collection.aggregate(pipeline, (er0, result: AggregationCursor<T>) => {
+      if (er0) {
+        reject(er0);
+      } else {
+        result.toArray((er1, items) => er1 ? reject(er1) : resolve(items ? items : []));
+      }
     });
   }));
 }
