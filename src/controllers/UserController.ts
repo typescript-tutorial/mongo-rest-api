@@ -1,10 +1,29 @@
 import {Request, Response} from 'express';
+import {User} from '../models/User';
 import {UserService} from '../services/UserService';
+import {LoadController} from './LoadController';
+import {Model} from './metadata';
 
-export class UserController {
+export const userModel: Model = {
+  name: 'user',
+  attributes: {
+    userId: {
+      type: 'string',
+      key: true
+    },
+    username: {
+      type: 'string'
+    },
+  }
+};
+export function log(msg: string): void {
+  console.log(msg);
+}
+export class UserController extends LoadController<User, string> {
   constructor(private userService: UserService) {
+    super(log, userService.load, userModel.attributes);
     this.all = this.all.bind(this);
-    this.load = this.load.bind(this);
+    // this.load = this.load.bind(this);
     this.insert = this.insert.bind(this);
     this.update = this.update.bind(this);
     this.patch = this.patch.bind(this);
@@ -15,6 +34,7 @@ export class UserController {
     this.userService.all()
       .then(users => res.status(200).json(users), err => res.status(500).send(err));
   }
+  /*
   load(req: Request, res: Response) {
     const id = req.params['id'];
     if (!id || id.length === 0) {
@@ -29,6 +49,7 @@ export class UserController {
         }
       }).catch(err => res.status(500).send(err));
   }
+  */
   insert(req: Request, res: Response) {
     const user = req.body;
     this.userService.insert(user)
