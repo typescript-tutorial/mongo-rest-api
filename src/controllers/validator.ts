@@ -1,8 +1,11 @@
-import {Attribute, ErrorMessage, Model} from './metadata';
+import {Attribute, Attributes, ErrorMessage, Model} from './metadata';
 
+export interface Phones {
+  [key: string]: string;
+}
 // tslint:disable-next-line:class-name
 export class resources {
-  static phonecodes: any = null;
+  static phonecodes: Phones;
   static digit = /^\d+$/;
   static email = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,4})$/i;
   static url = /[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
@@ -133,9 +136,11 @@ function handleMinMax(v: number|Date, attr: Attribute, path: string, errors: Err
     }
   }
 }
-function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: string, max?: number, allowUndefined?: boolean): void {
+function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: string, allowUndefined?: boolean, max?: number, patch?: boolean): void {
   const keys = Object.keys(obj);
+  let count = 0;
   for (const key of keys) {
+    count = count + 1;
     const attr: Attribute = meta.attributes[key];
     if (!attr) {
       if (!allowUndefined) {
@@ -144,8 +149,9 @@ function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: str
     } else {
       const na = attr.name;
       const v = obj[na];
+      console.log('v ' + na + ' ' + v);
       if (!v) {
-        if (attr.required) {
+        if (attr.required && !patch) {
           errors.push(createError(path, na, 'required'));
         }
       } else {
@@ -365,36 +371,67 @@ function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: str
       }
     }
   }
+  if (patch) {
+    return;
+  }
+  const aks = Object.keys(meta.attributes);
+  if (!allowUndefined) {
+    if (count >= aks.length) {
+      return;
+    }
+  }
+  checkUndefined(obj, meta.attributes, errors, aks);
 }
-
-export function validate(obj: any, meta: Model, max?: number, allowUndefined?: boolean): ErrorMessage[] {
+export function checkUndefined<T>(obj: T, attrs: Attributes, errors: ErrorMessage[], keys?: string[]): void {
+  if (!keys) {
+    keys = Object.keys(attrs);
+  }
+  for (const key of keys) {
+    const attr = attrs[key];
+    if (attr.required) {
+      const v = obj[key];
+      if (!v) {
+        errors.push(createError('', key, 'required'));
+      }
+    }
+  }
+}
+export function validate(obj: any, meta: Model, allowUndefined?: boolean, max?: number, patch?: boolean): ErrorMessage[] {
   const errors: ErrorMessage[] = [];
   const path = '';
   if (max == null) {
-    validateObject(obj, meta, errors, path, undefined, allowUndefined);
-  } else {
-    validateObject(obj, meta, errors, path, max, allowUndefined);
+    max = undefined;
   }
+  validateObject(obj, meta, errors, path, allowUndefined, max, patch);
   return errors;
 }
 
 export class Validator<T> {
   max: number;
-  constructor(public metadata: Model, max?: number, public allowUndefined?: boolean) {
+  constructor(public metadata: Model, public allowUndefined?: boolean, max?: number) {
     this.max = (max ? max : 5);
     this.validate = this.validate.bind(this);
   }
-  validate(obj: T, ctx?: any): Promise<ErrorMessage[]> {
-    const errors = validate(obj, this.metadata, this.max, this.allowUndefined);
+  validate(obj: T, patch?: boolean): Promise<ErrorMessage[]> {
+    const errors = validate(obj, this.metadata, this.allowUndefined, undefined, patch);
     return Promise.resolve(errors);
   }
+}
+export function removeRequiredErrors(errs: ErrorMessage[]): ErrorMessage[] {
+  const errors: ErrorMessage[] = [];
+  for (const err of errs) {
+    if (err.code === 'required' && err.field.indexOf('.') < 0) {
+      errors.push(err);
+    }
+  }
+  return errors;
 }
 export interface ValidatorContainer<T> {
   metadata: Model;
   validate?: (obj: T, ctx?: any) => Promise<ErrorMessage[]>;
 }
-export function setValidator<T>(c: ValidatorContainer<T>, max?: number, allowUndefined?: boolean): ValidatorContainer<T> {
-  const v = new Validator<T>(c.metadata, max, allowUndefined);
+export function setValidator<T>(c: ValidatorContainer<T>, allowUndefined?: boolean, max?: number): ValidatorContainer<T> {
+  const v = new Validator<T>(c.metadata, allowUndefined, max);
   c.validate = v.validate;
   return c;
 }

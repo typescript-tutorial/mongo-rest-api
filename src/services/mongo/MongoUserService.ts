@@ -1,6 +1,6 @@
 import {Collection, Db, FilterQuery} from 'mongodb';
 import {User} from '../../models/User';
-import { Model } from './metadata';
+import {Model} from './metadata';
 import {deleteById, findOne, findWithMap, insert, patch, update} from './mongo';
 import { MongoLoader } from './MongoLoader';
 import { MongoWriter } from './MongoWriter';
@@ -13,10 +13,12 @@ export const userModel: Model = {
     },
     username: {},
     email: {
-      format: 'email'
+      format: 'email',
+      required: true
     },
     phone: {
-      format: 'phone'
+      format: 'phone',
+      required: true
     },
     dateOfBirth: {
       type: 'datetime'

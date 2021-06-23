@@ -1,5 +1,5 @@
 import {ObjectId} from 'bson';
-import {Collection, Db} from 'mongodb';
+import {Collection} from 'mongodb';
 import {build, Model} from './metadata';
 import {count, findOne, findWithMap, StringMap} from './mongo';
 
@@ -30,7 +30,6 @@ export class MongoLoader<T, ID> {
     return this.idName;
   }
   metadata(): Model {
-    console.log('get metadata');
     return this.model;
   }
 

@@ -40,7 +40,7 @@ export interface GenericService<T, ID, R> {
 export class GenericController<T, ID> extends LoadController<T, ID> {
   status: StatusConfig;
   metadata: Model;
-  constructor(log: (msg: string, ctx?: any) => void, protected service: GenericService<T, ID, number|ResultInfo<T>>, status?: StatusConfig, public validate?: (obj: T, ctx?: any) => Promise<ErrorMessage[]>) {
+  constructor(log: (msg: string, ctx?: any) => void, protected service: GenericService<T, ID, number|ResultInfo<T>>, status?: StatusConfig, public validate?: (obj: T, patch?: boolean) => Promise<ErrorMessage[]>) {
     super(log, service);
     this.status = initializeStatus(status);
     this.metadata = service.metadata();
@@ -110,13 +110,12 @@ export class GenericController<T, ID> extends LoadController<T, ID> {
     }
     if (this.validate) {
       const l = this.log;
-      const ctx: any = {method: 'patch'};
-      this.validate(obj, ctx).then(errors => {
+      this.validate(obj, true).then(errors => {
         if (errors && errors.length > 0) {
           const r: ResultInfo<T> = {status: this.status.validation_error, errors};
           res.status(getStatusCode(errors)).json(r);
         } else {
-          update(res, this.status, obj, this.service.update, this.log);
+          update(res, this.status, obj, this.service.patch, this.log);
         }
       }).catch(err => handleError(err, res, l));
     } else {
