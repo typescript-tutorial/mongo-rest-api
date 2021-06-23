@@ -69,18 +69,18 @@ export function find<T>(collection: Collection, query: FilterQuery<T>, sort?: st
   });
 }
 
-export async function insert<T>(collection: Collection, obj: T, idName?: string): Promise<number> {
+export async function insert<T>(collection: Collection, obj: T, idName?: string, handleDuplicate?: boolean): Promise<number> {
   try {
     const value = await collection.insertOne(revertOne(obj, idName));
     mapOne(obj, idName);
     return value.insertedCount;
   } catch (err) {
-    if (err) {
+    if (handleDuplicate && err && err.errmsg) {
       if (err.errmsg.indexOf('duplicate key error collection:') >= 0) {
         if (err.errmsg.indexOf('dup key: { _id:') >= 0) {
           return 0;
         } else {
-          throw -1;
+          return -1;
         }
       }
     }

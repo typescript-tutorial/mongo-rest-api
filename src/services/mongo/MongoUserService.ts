@@ -1,17 +1,42 @@
 import {Collection, Db, FilterQuery} from 'mongodb';
 import {User} from '../../models/User';
+import { Model } from './metadata';
 import {deleteById, findOne, findWithMap, insert, patch, update} from './mongo';
 import { MongoLoader } from './MongoLoader';
+import { MongoWriter } from './MongoWriter';
 
-export class MongoUserService extends MongoLoader <User, string> {
+export const userModel: Model = {
+  name: 'user',
+  attributes: {
+    id: {
+      key: true
+    },
+    username: {},
+    email: {
+      format: 'email'
+    },
+    phone: {
+      format: 'phone'
+    },
+    dateOfBirth: {
+      type: 'datetime'
+    }
+  }
+};
+
+export class MongoUserService extends MongoWriter<User, string> {
   // private readonly collection: Collection;
   private readonly id2 = 'id';
   constructor(db: Db) {
-    super(db.collection('users'), 'id');
+    super(db, userModel);
     // this.collection = db.collection('users');
     // this.load = this.load.bind(this);
+    this.insert = this.insert.bind(this);
+    this.update = this.update.bind(this);
+    this.patch = this.patch.bind(this);
+    this.delete = this.delete.bind(this);
   }
-
+  /*
   all(): Promise<User[]> {
     return findWithMap<User>(this.collection, {}, this.id2);
   }
@@ -31,4 +56,5 @@ export class MongoUserService extends MongoLoader <User, string> {
   delete(id: string): Promise<number> {
     return deleteById(this.collection, id);
   }
+  */
 }

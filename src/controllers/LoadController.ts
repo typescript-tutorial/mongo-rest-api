@@ -6,20 +6,26 @@ export interface ViewService<T, ID> {
   load(id: ID, ctx?: any): Promise<T>;
 }
 export function buildId<T>(req: Request, attrs?: Attribute[]): T {
-  let key = 'id';
-  if (attrs && attrs.length === 1) {
-    const id = req.params[key];
+  if (!attrs) {
+    const id = req.params['id'];
     if (id && id.length > 0) {
       return id as any;
     }
-    key = (attrs[0].name ? attrs[0].name : 'id');
+    return null;
   }
-  if (!attrs || attrs.length <= 1) {
+  if (attrs && attrs.length === 1) {
+    const key = (attrs[0].name ? attrs[0].name : 'id');
     const id = req.params[key];
-    if (!id || id.length === 0) {
-      return null;
+    if (id && id.length > 0) {
+      if (attrs[0].type === 'integer' || attrs[0].type === 'number') {
+        if (isNaN(id as any)) {
+          return null;
+        }
+        const v = parseFloat(id);
+        return v as any;
+      }
+      return id as any;
     }
-    return id as any;
   }
   const ids: any = {};
   for (const attr of attrs) {
@@ -92,7 +98,7 @@ export function buildKeys(attrs: Attributes): Attribute[] {
 export class LoadController<T, ID> {
   protected keys?: Attribute[];
   protected view: (id: ID, ctx?: any) => Promise<T>;
-  constructor(protected log: (msg: string, ctx?: any) => void, viewService: ViewService<T, ID> | ((id: ID, ctx?: any) => Promise<T>), keys?: Attributes|Attribute[]|string[]) {
+  constructor(protected log: (msg: any, ctx?: any) => void, viewService: ViewService<T, ID> | ((id: ID, ctx?: any) => Promise<T>), keys?: Attributes|Attribute[]|string[]) {
     this.load = this.load.bind(this);
     this.view = getViewFunc(viewService);
     this.keys = getKeysFunc(viewService, keys);
@@ -100,7 +106,7 @@ export class LoadController<T, ID> {
   load(req: Request, res: Response) {
     const id = buildId<ID>(req, this.keys);
     if (!id) {
-      return res.status(400).end('Invalid parameters');
+      return res.status(400).end('invalid parameters');
     }
     this.view(id).then(obj => {
       if (obj) {
@@ -112,7 +118,7 @@ export class LoadController<T, ID> {
       if (this.log) {
         this.log(err as any);
       }
-      res.status(500).send('Internal Server Error');
+      res.status(500).end('Internal Server Error');
     });
   }
 }

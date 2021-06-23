@@ -18,7 +18,7 @@ export class MongoWriter<T, ID> extends MongoLoader<T, ID> {
     this.delete = this.delete.bind(this);
   }
   insert(obj: T): Promise<number> {
-    return insert(this.collection, obj, this.idName);
+    return insert(this.collection, obj, this.idName, true);
   }
   update(obj: T): Promise<number> {
     return update(this.collection, obj, this.idName);

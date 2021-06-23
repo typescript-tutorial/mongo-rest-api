@@ -2,6 +2,14 @@ export type DataType = 'ObjectId' | 'date' | 'datetime' | 'time'
     | 'boolean' | 'number' | 'integer' | 'string' | 'text'
     | 'object' | 'array' | 'primitives' | 'binary';
 export type FormatType = 'currency' | 'percentage' | 'email' | 'url' | 'phone' | 'fax' | 'ipv4' | 'ipv6';
+
+export interface ErrorMessage {
+  field: string;
+  code: string;
+  param?: string|number|Date;
+  message?: string;
+}
+
 export interface Model {
   name?: string;
   attributes: Attributes;
@@ -14,7 +22,7 @@ export interface Model {
 export interface Attribute {
   name?: string;
   field?: string;
-  type: DataType;
+  type?: DataType;
   format?: FormatType;
   required?: boolean;
   defaultValue?: any;

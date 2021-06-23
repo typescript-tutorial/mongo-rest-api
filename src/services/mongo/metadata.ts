@@ -17,7 +17,7 @@ export interface Model {
 export interface Attribute {
   name?: string;
   field?: string;
-  type: DataType;
+  type?: DataType;
   format?: FormatType;
   required?: boolean;
   defaultValue?: any;

@@ -13,6 +13,7 @@ export class MongoLoader<T, ID> {
     if (typeof model === 'string') {
       this.idName = model;
     } else {
+      this.model = model;
       const meta = build(model);
       this.idName = meta.id;
       this.idObjectId = meta.objectId;
@@ -29,6 +30,7 @@ export class MongoLoader<T, ID> {
     return this.idName;
   }
   metadata(): Model {
+    console.log('get metadata');
     return this.model;
   }
 
