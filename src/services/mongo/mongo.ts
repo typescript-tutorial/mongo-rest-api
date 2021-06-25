@@ -1,4 +1,4 @@
-import {AggregationCursor, BulkWriteOpResultObject, Collection, Db, DeleteWriteOpResultObject, FilterQuery, FindAndModifyWriteOpResultObject, MatchKeysAndValues, MongoClient, MongoClientOptions, PullOperator, PushOperator, SortOptionObject} from 'mongodb';
+import {AggregationCursor, BulkWriteOpResultObject, Collection, Db, DeleteWriteOpResultObject, FilterQuery, FindAndModifyWriteOpResultObject, MatchKeysAndValues, MongoClient, MongoClientOptions, ProjectionOperators, PullOperator, PushOperator, SchemaMember, SortOptionObject} from 'mongodb';
 
 export interface MongoConfig {
   uri: string;
@@ -50,7 +50,7 @@ export async function findWithMap<T>(collection: Collection, query: FilterQuery<
     return await mapArray(objects, m);
   }
 }
-export function find<T>(collection: Collection, query: FilterQuery<T>, sort?: string | [string, number][] | SortOptionObject<T>, limit?: number, skip?: number, project?: any): Promise<T[]> {
+export function find<T>(collection: Collection, query: FilterQuery<T>, sort?: string | [string, number][] | SortOptionObject<T>, limit?: number, skip?: number, project?: SchemaMember<T, ProjectionOperators | number | boolean | any>): Promise<T[]> {
   return new Promise<T[]>((resolve, reject) => {
     let cursor = collection.find(query);
     if (sort) {

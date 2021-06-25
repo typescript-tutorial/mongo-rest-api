@@ -6,6 +6,7 @@ export interface Phones {
 // tslint:disable-next-line:class-name
 export class resources {
   static phonecodes: Phones;
+  static ignoreDate?: boolean;
   static digit = /^\d+$/;
   static email = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,4})$/i;
   static url = /[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
@@ -200,6 +201,18 @@ function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: str
                       }
                       break;
                     }
+                    case 'ipv4': {
+                      if (!isIPv4(v)) {
+                        errors.push(createError(path, na, 'ipv4'));
+                      }
+                      break;
+                    }
+                    case 'ipv6': {
+                      if (!isIPv6(v)) {
+                        errors.push(createError(path, na, 'ipv6'));
+                      }
+                      break;
+                    }
                     default: {
                       break;
                     }
@@ -237,8 +250,6 @@ function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: str
             break;
           }
           case 'datetime':
-          case 'date': {
-            // If value is not date
             const date = toDate(v);
             const error = date.toString();
             if (!(date instanceof Date) || error === 'Invalid Date') {
@@ -249,6 +260,21 @@ function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: str
             }
             if (errors.length >= max) {
               return;
+            }
+            break;
+          case 'date': {
+            if (resources.ignoreDate) {
+              const date2 = toDate(v);
+              const error2 = date2.toString();
+              if (!(date2 instanceof Date) || error2 === 'Invalid Date') {
+                errors.push(createError(path, na, 'date'));
+                return;
+              } else {
+                handleMinMax(v, attr, path, errors);
+              }
+              if (errors.length >= max) {
+                return;
+              }
             }
             break;
           }
@@ -326,9 +352,9 @@ function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: str
                   if (attr.code === 'date') {
                     for (let i = 0; i < v.length; i++) {
                       if (v[i]) {
-                        const date = toDate(v);
-                        const error = date.toString();
-                        if (!(date instanceof Date) || error === 'Invalid Date') {
+                        const date3 = toDate(v);
+                        const error3 = date.toString();
+                        if (!(date3 instanceof Date) || error3 === 'Invalid Date') {
                           const y = (path != null && path.length > 0 ? path + '.' + key + '[' + i + ']' : key + '[' + i + ']');
                           const err = createError('', y, 'date');
                           errors.push(err);
@@ -428,10 +454,16 @@ export function removeRequiredErrors(errs: ErrorMessage[]): ErrorMessage[] {
 }
 export interface ValidatorContainer<T> {
   metadata: Model;
-  validate?: (obj: T, ctx?: any) => Promise<ErrorMessage[]>;
+  validate?: (obj: T, patch?: boolean) => Promise<ErrorMessage[]>;
 }
 export function setValidator<T>(c: ValidatorContainer<T>, allowUndefined?: boolean, max?: number): ValidatorContainer<T> {
   const v = new Validator<T>(c.metadata, allowUndefined, max);
   c.validate = v.validate;
   return c;
+}
+export function setValidators<T>(cs: ValidatorContainer<T>[], allowUndefined?: boolean, max?: number): ValidatorContainer<T>[] {
+  for (const c of cs) {
+    setValidator(c);
+  }
+  return cs;
 }
