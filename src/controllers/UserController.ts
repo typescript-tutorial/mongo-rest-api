@@ -1,11 +1,7 @@
 import {Request, Response} from 'express';
+import {GenericSearchController, SearchModel, SearchResult} from 'express-ext';
 import {User} from '../models/User';
 import {UserService} from '../services/UserService';
-import {GenericController} from './GenericController';
-import {GenericSearchController} from './GenericSearchController';
-import {LoadController} from './LoadController';
-import {Model} from './metadata';
-import {SearchModel, SearchResult} from './search';
 
 export interface UserSM extends SearchModel {
   id?: string;
