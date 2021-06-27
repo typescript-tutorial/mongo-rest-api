@@ -20,6 +20,7 @@ export interface Attribute {
   type?: DataType;
   format?: FormatType;
   required?: boolean;
+  match?: string;
   defaultValue?: any;
   key?: boolean;
   unique?: boolean;

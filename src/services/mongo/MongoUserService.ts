@@ -11,7 +11,9 @@ export const userModel: Model = {
     id: {
       key: true
     },
-    username: {},
+    username: {
+      match: 'contain'
+    },
     email: {
       format: 'email',
       required: true

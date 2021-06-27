@@ -137,12 +137,12 @@ function handleMinMax(v: number|Date, attr: Attribute, path: string, errors: Err
     }
   }
 }
-function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: string, allowUndefined?: boolean, max?: number, patch?: boolean): void {
+function validateObject(obj: any, attributes: Attributes, errors: ErrorMessage[], path: string, allowUndefined?: boolean, max?: number, patch?: boolean): void {
   const keys = Object.keys(obj);
   let count = 0;
   for (const key of keys) {
     count = count + 1;
-    const attr: Attribute = meta.attributes[key];
+    const attr: Attribute = attributes[key];
     if (!attr) {
       if (!allowUndefined) {
         errors.push(createError(path, key, 'undefined'));
@@ -298,7 +298,7 @@ function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: str
                 errors.push(createError(path, na, 'object'));
               } else {
                 const x = (path != null && path.length > 0 ? path + '.' + key : key);
-                validateObject(v, attr.typeof, errors, x);
+                validateObject(v, attr.typeof.attributes, errors, x);
               }
             }
             if (errors.length >= max) {
@@ -329,7 +329,7 @@ function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: str
                     }
                   } else {
                     const y = (path != null && path.length > 0 ? path + '.' + key + '[' + i + ']' : key + '[' + i + ']');
-                    validateObject(v[i], attr.typeof, errors, y);
+                    validateObject(v[i], attr.typeof.attributes, errors, y);
                   }
                 }
               }
@@ -400,13 +400,13 @@ function validateObject(obj: any, meta: Model, errors: ErrorMessage[], path: str
   if (patch) {
     return;
   }
-  const aks = Object.keys(meta.attributes);
+  const aks = Object.keys(attributes);
   if (!allowUndefined) {
     if (count >= aks.length) {
       return;
     }
   }
-  checkUndefined(obj, meta.attributes, errors, aks);
+  checkUndefined(obj, attributes, errors, aks);
 }
 export function checkUndefined<T>(obj: T, attrs: Attributes, errors: ErrorMessage[], keys?: string[]): void {
   if (!keys) {
@@ -422,27 +422,32 @@ export function checkUndefined<T>(obj: T, attrs: Attributes, errors: ErrorMessag
     }
   }
 }
-export function validate(obj: any, meta: Model, allowUndefined?: boolean, max?: number, patch?: boolean): ErrorMessage[] {
+export function validate(obj: any, attributes: Attributes, allowUndefined?: boolean, max?: number, patch?: boolean): ErrorMessage[] {
   const errors: ErrorMessage[] = [];
   const path = '';
   if (max == null) {
     max = undefined;
   }
-  validateObject(obj, meta, errors, path, allowUndefined, max, patch);
+  validateObject(obj, attributes, errors, path, allowUndefined, max, patch);
   return errors;
 }
 
 export class Validator<T> {
   max: number;
-  constructor(public metadata: Model, public allowUndefined?: boolean, max?: number) {
+  constructor(public attributes: Attributes, public allowUndefined?: boolean, max?: number) {
     this.max = (max ? max : 5);
     this.validate = this.validate.bind(this);
   }
   validate(obj: T, patch?: boolean): Promise<ErrorMessage[]> {
-    const errors = validate(obj, this.metadata, this.allowUndefined, undefined, patch);
+    const errors = validate(obj, this.attributes, this.allowUndefined, undefined, patch);
     return Promise.resolve(errors);
   }
 }
+export function createValidator<T>(attributes: Attributes, allowUndefined?: boolean, max?: number): Validator<T> {
+  const v = new Validator(attributes, allowUndefined, max);
+  return v;
+}
+/*
 export function removeRequiredErrors(errs: ErrorMessage[]): ErrorMessage[] {
   const errors: ErrorMessage[] = [];
   for (const err of errs) {
@@ -457,7 +462,7 @@ export interface ValidatorContainer<T> {
   validate?: (obj: T, patch?: boolean) => Promise<ErrorMessage[]>;
 }
 export function setValidator<T>(c: ValidatorContainer<T>, allowUndefined?: boolean, max?: number): ValidatorContainer<T> {
-  const v = new Validator<T>(c.metadata, allowUndefined, max);
+  const v = new Validator<T>(c.metadata.attributes, allowUndefined, max);
   c.validate = v.validate;
   return c;
 }
@@ -467,3 +472,4 @@ export function setValidators<T>(cs: ValidatorContainer<T>[], allowUndefined?: b
   }
   return cs;
 }
+*/

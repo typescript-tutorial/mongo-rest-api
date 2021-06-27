@@ -8,7 +8,10 @@ export interface SearchResult<T> {
   last?: boolean;
 }
 export function buildSearchResult<T>(collection: Collection, query: FilterQuery<T>, sort?: SortOptionObject<T>, limit?: number, skip?: number): Promise<SearchResult<T>> {
-  if (limit && skip) {
+  if (limit) {
+    if (!skip) {
+      skip = 0;
+    }
     const p1 = find(collection, query, sort, limit, skip);
     const p2 = count(collection, query);
     return Promise.all([p1, p2]).then(values => {

@@ -1,7 +1,8 @@
 import {Request, Response} from 'express';
 import {checkId, create, initializeStatus, isTypeError, ResultInfo, StatusConfig, update} from './edit';
 import {LoadController} from './LoadController';
-import {ErrorMessage, Model} from './metadata';
+import {Attributes, ErrorMessage, Model} from './metadata';
+import {resources} from './resources';
 import {handleError} from './response';
 import {buildId} from './view';
 
@@ -15,15 +16,24 @@ export interface GenericService<T, ID, R> {
 }
 export class GenericController<T, ID> extends LoadController<T, ID> {
   status: StatusConfig;
-  metadata: Model;
+  metadata: Attributes;
   constructor(log: (msg: string, ctx?: any) => void, public service: GenericService<T, ID, number|ResultInfo<T>>, status?: StatusConfig, public validate?: (obj: T, patch?: boolean) => Promise<ErrorMessage[]>) {
     super(log, service);
     this.status = initializeStatus(status);
-    this.metadata = service.metadata();
+    if (service.metadata) {
+      const m = service.metadata();
+      if (m) {
+        this.metadata = m.attributes;
+      }
+    }
     this.insert = this.insert.bind(this);
     this.update = this.update.bind(this);
     this.patch = this.patch.bind(this);
     this.delete = this.delete.bind(this);
+    if (!validate && resources.createValidator && this.metadata) {
+      const v = resources.createValidator(this.metadata);
+      this.validate = v.validate;
+    }
   }
   insert(req: Request, res: Response) {
     const obj = req.body;

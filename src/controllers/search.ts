@@ -26,7 +26,7 @@ export interface SearchConfig {
   total?: string;
   token?: string;
   last?: string;
-  quick?: boolean;
+  csv?: boolean;
 }
 export interface SearchResult<T> {
   list: T[];
@@ -62,7 +62,7 @@ export function initializeConfig(conf: SearchConfig): SearchConfig {
     total: conf.total,
     token: conf.token,
     last: conf.last,
-    quick: conf.quick
+    quick: conf.csv
   };
   if (!c.list || c.list.length === 0) {
     c.list = 'list';
@@ -71,7 +71,7 @@ export function initializeConfig(conf: SearchConfig): SearchConfig {
     c.list = 'total';
   }
   if (!c.last || c.last.length === 0) {
-    c.list = 'last';
+    c.last = 'last';
   }
   return c;
 }
@@ -129,28 +129,28 @@ export function getLimit<T>(obj: T): Limit {
         if (!pageIndex) {
           pageIndex = obj['pageNo'];
         }
-        if (pageIndex && !isNaN(pageIndex)) {
-          let ipageIndex = Math.floor(parseFloat(pageIndex));
-          if (ipageIndex < 1) {
-            ipageIndex = 1;
-          }
-          let firstPageSize = obj['firstLimit'];
-          if (!firstPageSize) {
-            firstPageSize = obj['firstPageSize'];
-          }
-          if (!firstPageSize) {
-            firstPageSize = obj['initPageSize'];
-          }
-          if (firstPageSize && !isNaN(firstPageSize)) {
-            const ifirstPageSize = Math.floor(parseFloat(firstPageSize));
-            if (ifirstPageSize > 0) {
-              deletePageInfo(obj);
-              return {limit: ipageSize, skip: ipageSize * (ipageIndex - 2) + ifirstPageSize};
-            }
-          }
-          deletePageInfo(obj);
-          return {limit: ipageSize, skip: ipageSize * (ipageIndex - 1)};
+      }
+      if (pageIndex && !isNaN(pageIndex)) {
+        let ipageIndex = Math.floor(parseFloat(pageIndex));
+        if (ipageIndex < 1) {
+          ipageIndex = 1;
         }
+        let firstPageSize = obj['firstLimit'];
+        if (!firstPageSize) {
+          firstPageSize = obj['firstPageSize'];
+        }
+        if (!firstPageSize) {
+          firstPageSize = obj['initPageSize'];
+        }
+        if (firstPageSize && !isNaN(firstPageSize)) {
+          const ifirstPageSize = Math.floor(parseFloat(firstPageSize));
+          if (ifirstPageSize > 0) {
+            deletePageInfo(obj);
+            return {limit: ipageSize, skip: ipageSize * (ipageIndex - 2) + ifirstPageSize};
+          }
+        }
+        deletePageInfo(obj);
+        return {limit: ipageSize, skip: ipageSize * (ipageIndex - 1)};
       }
       deletePageInfo(obj);
       return {limit: ipageSize, skip: 0};

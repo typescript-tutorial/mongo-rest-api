@@ -2,13 +2,20 @@ import {Request, Response} from 'express';
 import {User} from '../models/User';
 import {UserService} from '../services/UserService';
 import {GenericController} from './GenericController';
+import {GenericSearchController} from './GenericSearchController';
 import {LoadController} from './LoadController';
 import {Model} from './metadata';
+import {SearchModel, SearchResult} from './search';
 
-
-export class UserController extends GenericController<User, string> {
-  constructor(log: (msg: string, ctx?: any) => void, private userService: UserService) {
-    super(log, userService);
+export interface UserSM extends SearchModel {
+  id?: string;
+  username?: string;
+  email?: string;
+  phone?: string;
+}
+export class UserController extends GenericSearchController<User, string, UserSM> {
+  constructor(log: (msg: string, ctx?: any) => void, search: (s: UserSM, limit?: number, skip?: number, ctx?: any) => Promise<SearchResult<User>>, private userService: UserService) {
+    super(log, search, userService);
     this.all = this.all.bind(this);
     /*
     this.load = this.load.bind(this);

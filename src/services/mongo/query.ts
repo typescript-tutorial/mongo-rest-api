@@ -26,23 +26,31 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
               const json1 = Object.assign({}, b);
               a[field] = json1;
             } else if (attr.type === 'ObjectId') {
-              a[field] = s[key];
+              a[field] = v;
             }
-          } else if (typeof v === 'string' || typeof v === 'number') {
-            a[field] = s[key];
+          } else if (typeof v === 'string' && v.length > 0) {
+            a[field] = buildMatch(v, attr.match);
           }
-        } else if (typeof v === 'string' || typeof v === 'number') {
-          a[field] = s[key];
+        } else if (typeof v === 'string' && v.length > 0) {
+          a[field] = buildMatch(v, attr.match);
         }
-      } else if (typeof v === 'string' || typeof v === 'number') {
-        a[field] = s[key];
+      } else if (typeof v === 'string' && v.length > 0) {
+        a[field] = buildMatch(v, '');
       }
     }
   }
   const json: any = Object.assign({}, a);
   return json;
 }
-
+export function buildMatch(v: string, match: string): string|RegExp {
+  if (match === 'equal') {
+    return v;
+  } else if (match === 'prefix') {
+    return new RegExp(`^${v}`);
+  } else {
+    return new RegExp(`\\w*${v}\\w*`);
+  }
+}
 export function isDateRange(obj: any): boolean {
   if (!obj.startDate && !obj.endDate) {
     return false;
