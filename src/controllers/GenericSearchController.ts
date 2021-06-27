@@ -10,7 +10,7 @@ export interface Config extends StatusConfig, SearchConfig {
 export class GenericSearchController<T, ID, S extends SearchModel> extends GenericController<T, ID> {
   config?: SearchConfig;
   csv?: boolean;
-  constructor(log: (msg: string, ctx?: any) => void, public find: (s: S, limit?: number, skip?: number|string, refId?: string) => Promise<SearchResult<T>>, service: GenericService<T, ID, number|ResultInfo<T>>, config?: Config, validate?: (obj: T, patch?: boolean) => Promise<ErrorMessage[]>, public format?: (s: S) => S) {
+  constructor(log: (msg: string, ctx?: any) => void, public find: (s: S, limit?: number, skip?: number, refId?: string) => Promise<SearchResult<T>>, service: GenericService<T, ID, number|ResultInfo<T>>, config?: Config, validate?: (obj: T, patch?: boolean) => Promise<ErrorMessage[]>, public format?: (s: S) => S) {
     super(log, service, config, validate);
     this.search = this.search.bind(this);
     this.config = initializeConfig(config);

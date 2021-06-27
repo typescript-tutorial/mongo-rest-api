@@ -5,7 +5,7 @@ import {fromRequest, getLimit, initializeConfig, jsonResult, SearchConfig, Searc
 export class SearchController<T, S extends SearchModel> {
   config?: SearchConfig;
   csv?: boolean;
-  constructor(protected log: (msg: any, ctx?: any) => void, public find: (s: S, limit?: number, skip?: number|string, refId?: string) => Promise<SearchResult<T>>, config?: SearchConfig|boolean, public format?: (s: S) => S) {
+  constructor(protected log: (msg: any, ctx?: any) => void, public find: (s: S, limit?: number, skip?: number, refId?: string) => Promise<SearchResult<T>>, config?: SearchConfig|boolean, public format?: (s: S) => S) {
     this.search = this.search.bind(this);
     if (config) {
       if (typeof config === 'boolean') {

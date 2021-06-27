@@ -5,21 +5,11 @@ export interface ArrayMap {
 }
 
 export interface SearchModel {
-  page?: number;
-  limit?: number;
-  firstLimit?: number;
   fields?: string[];
   sort?: string;
-  currentUserId?: string;
 
   keyword?: string;
   excluding?: ArrayMap;
-  refId?: string|number;
-
-  pageNo?: number;
-  pageIndex?: number;
-  pageSize?: number;
-  initPageSize?: number;
 }
 export interface SearchConfig {
   list?: string;
@@ -215,7 +205,7 @@ export function toCsv<T>(fields: string[], r: SearchResult<T>): string {
     return rows.join('\n');
   }
 }
-
+/*
 export interface SearchModelBuilder<S extends SearchModel> {
   buildFromRequestUrl(req: Request): S;
   buildFromRequestBody(req: Request): S;
@@ -272,10 +262,9 @@ export function formatSearchModel<S extends SearchModel>(s: S): S {
   if (!s.hasOwnProperty('page') || !s.page || s.page < 1) {
     s.page = 1;
   }
-  /*
   if (!s.hasOwnProperty('keyword') || !s.keyword) {
     s.keyword = '';
   }
-  */
   return s;
 }
+*/
