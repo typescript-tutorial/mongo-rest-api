@@ -16,7 +16,7 @@ export interface GenericService<T, ID, R> {
 export class GenericController<T, ID> extends LoadController<T, ID> {
   status: StatusConfig;
   metadata: Model;
-  constructor(log: (msg: string, ctx?: any) => void, protected service: GenericService<T, ID, number|ResultInfo<T>>, status?: StatusConfig, public validate?: (obj: T, patch?: boolean) => Promise<ErrorMessage[]>) {
+  constructor(log: (msg: string, ctx?: any) => void, public service: GenericService<T, ID, number|ResultInfo<T>>, status?: StatusConfig, public validate?: (obj: T, patch?: boolean) => Promise<ErrorMessage[]>) {
     super(log, service);
     this.status = initializeStatus(status);
     this.metadata = service.metadata();
