@@ -16,11 +16,11 @@ export class SearchBuilder<T, S> {
       this.search = this.search.bind(this);
     }
   search(s: S, limit?: number, skip?: number, ctx?: any): Promise<SearchResult<T>> {
-    console.log('limig 2' + limit);
-    const query = this.buildQuery(s, this.metadata);
     const st = (this.sort ? this.sort : 'sort');
     const sn = s[st] as string;
     const so = this.buildSort(sn, this.metadata);
+    delete s[st];
+    const query = this.buildQuery(s, this.metadata);
     return buildSearchResult(this.collection, query, so, limit, skip);
   }
 }

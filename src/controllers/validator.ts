@@ -150,7 +150,6 @@ function validateObject(obj: any, attributes: Attributes, errors: ErrorMessage[]
     } else {
       const na = attr.name;
       const v = obj[na];
-      console.log('v ' + na + ' ' + v);
       if (!v) {
         if (attr.required && !patch) {
           errors.push(createError(path, na, 'required'));

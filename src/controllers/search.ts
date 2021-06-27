@@ -106,8 +106,13 @@ export function fromUrl<S>(req: Request, format?: (s: S) => S): S {
 export interface Limit {
   limit?: number;
   skip?: number;
+  refId?: string;
 }
 export function getLimit<T>(obj: T): Limit {
+  let refId = obj['refId'];
+  if (!refId) {
+    refId = obj['nextPageToken'];
+  }
   let pageSize = obj['limit'];
   if (!pageSize) {
     pageSize = obj['pageSize'];
@@ -153,10 +158,10 @@ export function getLimit<T>(obj: T): Limit {
         return {limit: ipageSize, skip: ipageSize * (ipageIndex - 1)};
       }
       deletePageInfo(obj);
-      return {limit: ipageSize, skip: 0};
+      return {limit: ipageSize, skip: 0, refId};
     }
   }
-  return {limit: undefined, skip: undefined};
+  return {limit: undefined, skip: undefined, refId};
 }
 export function deletePageInfo(obj: any): void {
   delete obj['limit'];
@@ -168,6 +173,9 @@ export function deletePageInfo(obj: any): void {
   delete obj['pageSize'];
   delete obj['initPageSize'];
   delete obj['firstPageSize'];
+  delete obj['refId'];
+  delete obj['refId'];
+  delete obj['nextPageToken'];
 }
 const re = /"/g;
 export function toCsv<T>(fields: string[], r: SearchResult<T>): string {
@@ -231,7 +239,6 @@ export class DefaultSearchModelBuilder<S extends SearchModel> implements SearchM
     if (this.format) {
       this.format(s);
     }
-    console.log('search model by get:' + JSON.stringify(s));
     return s;
   }
   buildFromRequestBody(req: Request): S {
@@ -265,8 +272,10 @@ export function formatSearchModel<S extends SearchModel>(s: S): S {
   if (!s.hasOwnProperty('page') || !s.page || s.page < 1) {
     s.page = 1;
   }
+  /*
   if (!s.hasOwnProperty('keyword') || !s.keyword) {
     s.keyword = '';
   }
+  */
   return s;
 }

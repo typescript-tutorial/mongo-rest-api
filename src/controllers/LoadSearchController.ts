@@ -7,7 +7,7 @@ import {fromRequest, getLimit, initializeConfig, jsonResult, SearchConfig, Searc
 export class LoadSearchController<T, ID, S extends SearchModel> extends LoadController<T, ID> {
   config?: SearchConfig;
   csv?: boolean;
-  constructor(log: (msg: any, ctx?: any) => void, public find: (s: S, limit?: number, skip?: number, ctx?: any) => Promise<SearchResult<T>>, viewService: ViewService<T, ID> | ((id: ID, ctx?: any) => Promise<T>), keys?: Attributes|Attribute[]|string[], config?: SearchConfig|boolean, public format?: (s: S) => S) {
+  constructor(log: (msg: any, ctx?: any) => void, public find: (s: S, limit?: number, skip?: number|string, refId?: string) => Promise<SearchResult<T>>, viewService: ViewService<T, ID> | ((id: ID, ctx?: any) => Promise<T>), keys?: Attributes|Attribute[]|string[], config?: SearchConfig|boolean, public format?: (s: S) => S) {
     super(log, viewService, keys);
     this.search = this.search.bind(this);
     if (config) {
@@ -24,7 +24,7 @@ export class LoadSearchController<T, ID, S extends SearchModel> extends LoadCont
   search(req: Request, res: Response) {
     const s = fromRequest<S>(req, this.format);
     const l = getLimit(s);
-    this.find(s, l.limit, l.skip)
+    this.find(s, l.limit, l.skip, l.refId)
       .then(result => jsonResult(res, result, this.csv, s.fields, this.config))
       .catch(err => handleError(err, res, this.log));
   }

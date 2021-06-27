@@ -32,7 +32,7 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
             a[field] = buildMatch(v, attr.match);
           }
         } else if (typeof v === 'string' && v.length > 0) {
-          a[field] = buildMatch(v, attr.match);
+          a[field] = buildMatch(v, '');
         }
       } else if (typeof v === 'string' && v.length > 0) {
         a[field] = buildMatch(v, '');
