@@ -9,6 +9,7 @@ export class SearchBuilder<T, S> {
   constructor(public collection: Collection,
     public buildQuery: (s: S, m?: Attributes) => FilterQuery<T>,
     metadata: Attributes,
+    public mp?: (v: T) => T,
     public sort?: string,
     buildSort?: (s: string, m?: Attributes|StringMap) => SortOptionObject<T>) {
       this.metadata = metadata;
@@ -21,6 +22,16 @@ export class SearchBuilder<T, S> {
     const so = this.buildSort(sn, this.metadata);
     delete s[st];
     const query = this.buildQuery(s, this.metadata);
-    return buildSearchResult(this.collection, query, so, limit, skip);
+    if (this.mp) {
+      return buildSearchResult<T>(this.collection, query, so, limit, skip).then(v => {
+        if (!v.list) {
+          return v;
+        }
+        v.list = v.list.map(o => this.mp(o));
+        return v;
+      });
+    } else {
+      return buildSearchResult<T>(this.collection, query, so, limit, skip);
+    }
   }
 }

@@ -35,7 +35,24 @@ function _findOne<T>(collection: Collection, query: FilterQuery<T>): Promise<T> 
     collection.findOne(query, (err, item: T) => err ? reject(err) : resolve(item));
   });
 }
-
+export function getFields<T>(collection: Collection, field: string, values: T[], noSort?: boolean): Promise<T[]> {
+  const query: any = {};
+  query[field] = { $in: values };
+  const project: any = {};
+  project[field] = 1;
+  let sort: any;
+  if (!noSort) {
+    sort = {};
+    sort[field] = 1;
+  }
+  return find(collection, query, sort, undefined, undefined, project).then(v => {
+    const r: T[] = [];
+    for (const s of v) {
+      r.push(s[field]);
+    }
+    return r;
+  });
+}
 export async function findWithMap<T>(collection: Collection, query: FilterQuery<T>, idName?: string, m?: StringMap, sort?: string | [string, number][] | SortOptionObject<T>, limit?: number, skip?: number, project?: any): Promise<T[]> {
   const objects = await find<T>(collection, query, sort, limit, skip, project);
   for (const obj of objects) {
@@ -398,4 +415,100 @@ export function mapArray<T>(results: T[], m?: StringMap): T[] {
     objs.push(obj2);
   }
   return objs;
+}
+export function buildProject<T>(fields: string[], notIncludeId?: boolean): SchemaMember<T, ProjectionOperators | number | boolean | any> {
+  if (!fields || fields.length === 0) {
+    return undefined;
+  }
+  const p: any = {};
+  for (const s of fields) {
+    p[s] = 1;
+  }
+  if (!notIncludeId) {
+    p['_id'] = 1;
+  }
+  return p;
+}
+export function fromPoints<T>(s: T[], geo?: string, latitude?: string, longitude?: string): T[] {
+  if (!geo) {
+    geo = 'geo';
+  }
+  if (!latitude) {
+    latitude = 'latitude';
+  }
+  if (!longitude) {
+    longitude = 'longitude';
+  }
+  return s.map(o => fromPoint(o, geo, latitude, longitude));
+}
+export function fromPoint<T>(v: T, geo: string, latitude: string, longitude: string): T {
+  if (!v) {
+    return v;
+  }
+  const point: any = v[geo];
+  if (!point) {
+    return v;
+  }
+  const coordinates = point['coordinates'];
+  if (!coordinates || !Array.isArray(coordinates)) {
+    return v;
+  }
+  if (coordinates.length < 2) {
+    return v;
+  }
+  const lat = coordinates[0];
+  const long = coordinates[1];
+  if (typeof lat !== 'number' || typeof long !== 'number') {
+    return v;
+  }
+  v[latitude] = lat;
+  v[longitude] = long;
+  delete v[geo];
+  return v;
+}
+export function toPoints<T>(s: T[], geo?: string, latitude?: string, longitude?: string): T[] {
+  if (!geo) {
+    geo = 'geo';
+  }
+  if (!latitude) {
+    latitude = 'latitude';
+  }
+  if (!longitude) {
+    longitude = 'longitude';
+  }
+  return s.map(o => toPoint(o, geo, latitude, longitude));
+}
+export function toPoint<T>(v: T, geo: string, latitude: string, longitude: string): T {
+  if (!v) {
+    return v;
+  }
+  const lat = v[latitude];
+  const long = v[longitude];
+  if (typeof lat !== 'number' || typeof long !== 'number') {
+    return v;
+  }
+  const point = { type: 'Point', coordinates: [lat, long] };
+  v[geo] = point;
+  delete v[latitude];
+  delete v[longitude];
+}
+
+export class PointMapper<T> {
+  constructor(public geo?: string, public latitude?: string, public longitude?: string) {
+    if (!geo) {
+      this.geo = 'geo';
+    }
+    if (!latitude) {
+      this.latitude = 'latitude';
+    }
+    if (!longitude) {
+      this.longitude = 'longitude';
+    }
+  }
+  fromPoint(model: T): T {
+    return fromPoint(model, this.geo, this.latitude, this.longitude);
+  }
+  toPoint(model: T): T {
+    return toPoint(model, this.geo, this.latitude, this.longitude);
+  }
 }

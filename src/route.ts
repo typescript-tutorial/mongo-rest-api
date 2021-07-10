@@ -2,8 +2,11 @@ import {Application} from 'express';
 import {ApplicationContext} from './context';
 
 export function route(app: Application, ctx: ApplicationContext): void {
-  const user = ctx.userController;
-  app.get('/health', ctx.healthController.check);
+  const user = ctx.user;
+  app.get('/health', ctx.health.check);
+  app.get('/locations', ctx.location.all);
+  app.get('/locations/:id', ctx.location.load);
+
   app.get('/users', user.all);
   app.post('/users/search', user.search);
   app.get('/users/:id', user.load);

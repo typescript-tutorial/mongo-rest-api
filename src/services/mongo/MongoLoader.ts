@@ -9,7 +9,7 @@ export class MongoLoader<T, ID> {
   protected idObjectId?: boolean;
   protected map?: StringMap;
 
-  constructor(protected collection: Collection, model: Model|string) {
+  constructor(protected collection: Collection, model: Model|string, private mp?: (v: T) => T) {
     if (typeof model === 'string') {
       this.idName = model;
     } else {
@@ -25,20 +25,26 @@ export class MongoLoader<T, ID> {
     this.load = this.load.bind(this);
     this.exist = this.exist.bind(this);
   }
-
   id(): string {
     return this.idName;
   }
   metadata(): Model {
     return this.model;
   }
-
   all(): Promise<T[]> {
-    return findWithMap(this.collection, {}, this.idName, this.map);
+    if (this.mp) {
+      return findWithMap<T>(this.collection, {}, this.idName, this.map).then(v => v.map(o => this.mp(o)));
+    } else {
+      return findWithMap<T>(this.collection, {}, this.idName, this.map);
+    }
   }
   load(id: ID): Promise<T> {
     const query: any = { _id: (this.idObjectId ? new ObjectId('' + id) : '' + id) };
-    return findOne<T>(this.collection, query, this.idName, this.map);
+    if (this.mp) {
+      return findOne<T>(this.collection, query, this.idName, this.map).then(v => this.mp(v));
+    } else {
+      return findOne<T>(this.collection, query, this.idName, this.map);
+    }
   }
   exist(id: ID): Promise<boolean> {
     const query = { _id: (this.idObjectId ? new ObjectId('' + id) : '' + id) };

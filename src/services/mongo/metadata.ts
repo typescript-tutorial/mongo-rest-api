@@ -5,6 +5,7 @@ export type DataType = 'ObjectId' | 'date' | 'datetime' | 'time'
     | 'boolean' | 'number' | 'integer' | 'string' | 'text'
     | 'object' | 'array' | 'primitives' | 'binary';
 export type FormatType = 'currency' | 'percentage' | 'email' | 'url' | 'phone' | 'fax' | 'ipv4' | 'ipv6';
+export type MatchType = 'equal' | 'prefix' | 'contain';
 
 export interface Model {
   name?: string;

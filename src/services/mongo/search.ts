@@ -1,18 +1,19 @@
 import {Collection, FilterQuery, SortOptionObject} from 'mongodb';
 import {Attributes} from './metadata';
-import {count, find, StringMap} from './mongo';
+import {buildProject, count, find, StringMap} from './mongo';
 
 export interface SearchResult<T> {
   list: T[];
   total?: number;
   last?: boolean;
 }
-export function buildSearchResult<T>(collection: Collection, query: FilterQuery<T>, sort?: SortOptionObject<T>, limit?: number, skip?: number): Promise<SearchResult<T>> {
+export function buildSearchResult<T>(collection: Collection, query: FilterQuery<T>, sort?: SortOptionObject<T>, limit?: number, skip?: number, fields?: string[]): Promise<SearchResult<T>> {
+  const project = buildProject(fields);
   if (limit) {
     if (!skip) {
       skip = 0;
     }
-    const p1 = find(collection, query, sort, limit, skip);
+    const p1 = find(collection, query, sort, limit, skip, project);
     const p2 = count(collection, query);
     return Promise.all([p1, p2]).then(values => {
       const [list, total] = values;
@@ -20,7 +21,7 @@ export function buildSearchResult<T>(collection: Collection, query: FilterQuery<
       return r;
     });
   } else {
-    return find(collection, query, sort).then(list => {
+    return find(collection, query, sort, undefined, undefined, project).then(list => {
       const r = {list};
       return r;
     });
