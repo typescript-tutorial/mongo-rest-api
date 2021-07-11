@@ -1,13 +1,13 @@
 import {Collection, FilterQuery, SortOptionObject} from 'mongodb';
 import {Attributes} from './metadata';
-import {buildProject, count, find, StringMap} from './mongo';
+import {buildProject, count, find, mapArray, StringMap} from './mongo';
 
 export interface SearchResult<T> {
   list: T[];
   total?: number;
   last?: boolean;
 }
-export function buildSearchResult<T>(collection: Collection, query: FilterQuery<T>, sort?: SortOptionObject<T>, limit?: number, skip?: number, fields?: string[]): Promise<SearchResult<T>> {
+export function buildSearchResult<T>(collection: Collection, query: FilterQuery<T>, sort?: SortOptionObject<T>, limit?: number, skip?: number, fields?: string[], idName?: string, map?: StringMap, mp?: (v: T) => T): Promise<SearchResult<T>> {
   const project = buildProject(fields);
   if (limit) {
     if (!skip || isNaN(skip)) {
@@ -16,12 +16,37 @@ export function buildSearchResult<T>(collection: Collection, query: FilterQuery<
     const p1 = find(collection, query, sort, limit, skip, project);
     const p2 = count(collection, query);
     return Promise.all([p1, p2]).then(values => {
-      const [list, total] = values;
+      const [list2, total] = values;
+      let list = list2;
+      if (idName && idName !== '') {
+        for (const obj of list) {
+          obj[idName] = obj['_id'];
+          delete obj['_id'];
+        }
+      }
+      if (map) {
+        list = mapArray(list, map);
+      }
+      if (mp) {
+        list = list.map(o => mp(o));
+      }
       const r: SearchResult<T> = { list, total, last: skip + list.length >= total};
       return r;
     });
   } else {
     return find(collection, query, sort, undefined, undefined, project).then(list => {
+      if (idName && idName !== '') {
+        for (const obj of list) {
+          obj[idName] = obj['_id'];
+          delete obj['_id'];
+        }
+      }
+      if (map) {
+        list = mapArray(list, map);
+      }
+      if (mp) {
+        list = list.map(o => mp(o));
+      }
       const r = {list};
       return r;
     });

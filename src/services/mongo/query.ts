@@ -27,16 +27,14 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
             } else {
               b['$gte'] = v;
             }
-            const json1 = Object.assign({}, b);
-            a[field] = json1;
+            a[field] = b;
           } else if (typeof v === 'number') {
             if (attr.match === 'max') {
               b['$lte'] = v;
             } else {
               b['$gte'] = v;
             }
-            const json1 = Object.assign({}, b);
-            a[field] = json1;
+            a[field] = b;
           } else if (attr.type === 'ObjectId') {
             a[field] = v;
           } else if (typeof v === 'object') {
@@ -60,8 +58,7 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
                 } else if (v['lower']) {
                   b['$gt'] = v['lower'];
                 }
-                const json1 = Object.assign({}, b);
-                a[field] = json1;
+                a[field] = b;
               }
             } else if (attr.type === 'number' || attr.type === 'integer') {
               if (isNumberRange(v)) {
@@ -75,8 +72,7 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
                 } else if (v['lower']) {
                   b['$gt'] = v['lower'];
                 }
-                const json1 = Object.assign({}, b);
-                a[field] = json1;
+                a[field] = b;
               }
             }
           }

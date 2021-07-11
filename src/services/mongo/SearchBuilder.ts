@@ -1,6 +1,6 @@
 import {Collection, FilterQuery, SortOptionObject} from 'mongodb';
 import {Attributes, build} from './metadata';
-import {mapArray, StringMap} from './mongo';
+import {StringMap} from './mongo';
 import {buildSearchResult, buildSort as bs, SearchResult} from './search';
 
 export class SearchBuilder<T, S> {
@@ -33,28 +33,6 @@ export class SearchBuilder<T, S> {
     const so = this.buildSort(sn, this.metadata);
     delete s[st];
     const query = this.buildQuery(s, this.metadata);
-    const idName = this.idName;
-    const map = this.map;
-    const mp = this.mp;
-    return buildSearchResult<T>(this.collection, query, so, limit, skip, fields).then(v => {
-      if (!v.list) {
-        return v;
-      }
-      if (idName && idName !== '') {
-        for (const obj of v.list) {
-          obj[idName] = obj['_id'];
-          delete obj['_id'];
-        }
-      }
-      if (map) {
-        v.list = mapArray(v.list, map);
-      }
-      if (mp) {
-        v.list = v.list.map(o => this.mp(o));
-        return v;
-      } else {
-        return v;
-      }
-    });
+    return buildSearchResult<T>(this.collection, query, so, limit, skip, fields, this.idName, this.map, this.mp);
   }
 }
