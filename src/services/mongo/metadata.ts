@@ -10,7 +10,7 @@ export type DataType = 'ObjectId' | 'date' | 'datetime' | 'time'
     | 'boolean' | 'number' | 'integer' | 'string' | 'text'
     | 'object' | 'array' | 'primitives' | 'binary';
 export type FormatType = 'currency' | 'percentage' | 'email' | 'url' | 'phone' | 'fax' | 'ipv4' | 'ipv6';
-export type MatchType = 'equal' | 'prefix' | 'contain';
+export type MatchType = 'equal' | 'prefix' | 'contain' | 'max' | 'min'; // contain: default for string, min: default for Date, number
 
 export interface Model {
   name?: string;
@@ -47,7 +47,7 @@ export interface Attribute {
   ignored?: boolean;
   jsonField?: string;
   link?: string;
-  typeof?: Model;
+  typeof?: Attributes;
 }
 export interface Attributes {
   [key: string]: Attribute;

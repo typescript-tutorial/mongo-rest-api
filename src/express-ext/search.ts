@@ -1,9 +1,9 @@
 import {Request, Response} from 'express';
+import {Attribute, Attributes} from './metadata';
 
 export interface ArrayMap {
   [key: string]: string[]|number[];
 }
-
 export interface SearchModel {
   fields?: string[];
   sort?: string;
@@ -21,6 +21,7 @@ export interface SearchConfig {
 export interface SearchResult<T> {
   list: T[];
   total?: number;
+  nextPageToken?: string;
   last?: boolean;
 }
 
@@ -38,6 +39,9 @@ export function buildResult<T>(r: SearchResult<T>, conf?: SearchConfig): any {
   const x: any = {};
   x[conf.list] = r.list;
   x[conf.total] = r.total;
+  if (r.nextPageToken && r.nextPageToken.length > 0) {
+    x[conf.token] = r.nextPageToken;
+  }
   if (r.last) {
     x[conf.last] = r.last;
   }
@@ -63,20 +67,16 @@ export function initializeConfig(conf: SearchConfig): SearchConfig {
   if (!c.last || c.last.length === 0) {
     c.last = 'last';
   }
+  if (!c.token || c.token.length === 0) {
+    c.token = 'nextPageToken';
+  }
   return c;
 }
-export function fromRequest<S>(req: Request, format?: (s: S) => S): S {
-  const s = (req.method === 'GET' ? fromUrl(req, format) : fromBody(req, format));
+export function fromRequest<S>(req: Request): S {
+  const s: any = (req.method === 'GET' ? fromUrl(req) : req.body);
   return s;
 }
-export function fromBody<S>(req: Request, format?: (s: S) => S): S {
-  const s = req.body;
-  if (!format) {
-    return s;
-  }
-  return format(s);
-}
-export function fromUrl<S>(req: Request, format?: (s: S) => S): S {
+export function fromUrl<S>(req: Request): S {
   const s: any = {};
     const obj = req.query;
     const keys = Object.keys(obj);
@@ -85,24 +85,46 @@ export function fromUrl<S>(req: Request, format?: (s: S) => S): S {
         const x = (obj[key] as string).split(',');
         s[key] = x;
       } else {
-        s[key] = obj[key];
+        setValue(s, key, obj[key] as string);
       }
     }
-    if (format) {
-      format(s);
-    }
     return s;
+}
+export function setValue<T>(obj: T, key: string, v: string): void {
+  const vs = key.split('.');
+  if (vs.length === 1) {
+    obj[key] = v;
+  } else {
+    let current: any = obj;
+    const l = vs.length - 1;
+    for (let i = 0; i < l; i++) {
+      const sub = vs[i];
+      if (!obj[sub]) {
+        obj[sub] = {};
+      }
+      current = obj[sub];
+    }
+    current[vs[vs.length - 1]] = v;
+  }
 }
 export interface Limit {
   limit?: number;
   skip?: number;
   refId?: string;
+  fields?: string[];
+  skipOrRefId?: string|number;
 }
-export function getLimit<T>(obj: T): Limit {
+export function getParameters<T>(obj: T): Limit {
+  let fields;
+  const fs = obj['fields'];
+  if (fs && Array.isArray(fs)) {
+    fields = fs;
+  }
   let refId = obj['refId'];
   if (!refId) {
     refId = obj['nextPageToken'];
   }
+  const r: Limit = {fields, refId};
   let pageSize = obj['limit'];
   if (!pageSize) {
     pageSize = obj['pageSize'];
@@ -110,12 +132,15 @@ export function getLimit<T>(obj: T): Limit {
   if (pageSize && !isNaN(pageSize)) {
     const ipageSize = Math.floor(parseFloat(pageSize));
     if (ipageSize > 0) {
+      r.limit = ipageSize;
       const skip = obj['skip'];
       if (skip && !isNaN(skip)) {
         const iskip = Math.floor(parseFloat(skip));
         if (iskip >= 0) {
+          r.skip = iskip;
+          r.skipOrRefId = r.skip;
           deletePageInfo(obj);
-          return {limit: ipageSize, skip: iskip};
+          return r;
         }
       }
       let pageIndex = obj['page'];
@@ -140,18 +165,30 @@ export function getLimit<T>(obj: T): Limit {
         if (firstPageSize && !isNaN(firstPageSize)) {
           const ifirstPageSize = Math.floor(parseFloat(firstPageSize));
           if (ifirstPageSize > 0) {
+            r.skip = ipageSize * (ipageIndex - 2) + ifirstPageSize;
+            r.skipOrRefId = r.skip;
             deletePageInfo(obj);
-            return {limit: ipageSize, skip: ipageSize * (ipageIndex - 2) + ifirstPageSize};
+            return r;
           }
         }
+        r.skip = ipageSize * (ipageIndex - 1);
+        r.skipOrRefId = r.skip;
         deletePageInfo(obj);
-        return {limit: ipageSize, skip: ipageSize * (ipageIndex - 1)};
+        return r;
+      }
+      r.skip = 0;
+      if (r.refId && r.refId.length > 0) {
+        r.skipOrRefId = r.refId;
       }
       deletePageInfo(obj);
-      return {limit: ipageSize, skip: 0, refId};
+      return r;
     }
   }
-  return {limit: undefined, skip: undefined, refId};
+  if (r.refId && r.refId.length > 0) {
+    r.skipOrRefId = r.refId;
+  }
+  deletePageInfo(obj);
+  return r;
 }
 export function deletePageInfo(obj: any): void {
   delete obj['limit'];
@@ -164,8 +201,8 @@ export function deletePageInfo(obj: any): void {
   delete obj['initPageSize'];
   delete obj['firstPageSize'];
   delete obj['refId'];
-  delete obj['refId'];
   delete obj['nextPageToken'];
+  delete obj['fields'];
 }
 const re = /"/g;
 export function toCsv<T>(fields: string[], r: SearchResult<T>): string {
@@ -177,7 +214,7 @@ export function toCsv<T>(fields: string[], r: SearchResult<T>): string {
     const n = 'number';
     const b = '""';
     const rows: string[] = [];
-    rows.push('' + r.total + ',' + (r.last ? '1' : ''));
+    rows.push('' + (r.total ? r.total : '') + ',' + (r.nextPageToken ? r.nextPageToken : '') + ',' + (r.last ? '1' : ''));
     for (const item of r.list) {
       const cols: string[] = [];
       for (const name of fields) {
@@ -205,66 +242,153 @@ export function toCsv<T>(fields: string[], r: SearchResult<T>): string {
     return rows.join('\n');
   }
 }
-/*
-export interface SearchModelBuilder<S extends SearchModel> {
-  buildFromRequestUrl(req: Request): S;
-  buildFromRequestBody(req: Request): S;
+
+export interface DateRange {
+  startDate?: Date;
+  endDate?: Date;
+  startTime?: Date;
+  endTime?: Date;
+  min?: Date;
+  max?: Date;
+  upper?: Date;
 }
-export class DefaultSearchModelBuilder<S extends SearchModel> implements SearchModelBuilder<S> {
-  constructor(protected format: (s: S) => S) {
+export interface NumberRange {
+  min?: number;
+  max?: number;
+  lower?: number;
+  upper?: number;
+}
+export interface Metadata {
+  dates?: string[];
+  numbers?: string[];
+}
+export function buildMetadata(attributes: Attributes, includeDate?: boolean): Metadata {
+  const keys: string[] = Object.keys(attributes);
+  const dates: string[] = [];
+  const numbers: string[] = [];
+  for (const key of keys) {
+    const attr: Attribute = attributes[key];
+    if (attr.type === 'number' || attr.type === 'integer') {
+      numbers.push(key);
+    } else if (attr.type === 'datetime' || (includeDate === true && attr.type === 'date')) {
+      dates.push(key);
+    }
   }
-  buildFromRequestUrl(req: Request): S {
-    const s: any = {};
-    const obj = req.query;
-    const keys = Object.keys(obj);
-    for (const key of keys) {
-      if (key === 'fields') {
-        const x = (obj[key] as string).split(',');
-        s[key] = x;
-      } else {
-        s[key] = obj[key];
+  const m: Metadata = {};
+  if (dates.length > 0) {
+    m.dates = dates;
+  }
+  if (numbers.length > 0) {
+    m.numbers = numbers;
+  }
+  return m;
+}
+
+const _datereg = '/Date(';
+const _re = /-?\d+/;
+function toDate(v: any) {
+  if (!v || v === '') {
+    return null;
+  }
+  if (v instanceof Date) {
+    return v;
+  } else if (typeof v === 'number') {
+    return new Date(v);
+  }
+  const i = v.indexOf(_datereg);
+  if (i >= 0) {
+    const m = _re.exec(v);
+    const d = parseInt(m[0], null);
+    return new Date(d);
+  } else {
+    if (isNaN(v)) {
+      return new Date(v);
+    } else {
+      const d = parseInt(v, null);
+      return new Date(d);
+    }
+  }
+}
+
+export function format<T>(obj: T, dates?: string[], nums?: string[]): T {
+  if (dates && dates.length > 0) {
+    for (const s of dates) {
+      const v = obj[s];
+      if (v) {
+        if (v instanceof Date) {
+          continue;
+        }
+        if (typeof v === 'string' || typeof v === 'number') {
+          const d = toDate(v);
+          const error = d.toString();
+          if (!(d instanceof Date) || error === 'Invalid Date') {
+            delete obj[s];
+          } else {
+            obj[s] = d;
+          }
+        } else if (typeof v === 'object') {
+          const keys = Object.keys(v);
+          for (const key of keys) {
+            const v2 = v[key];
+            if (v2 instanceof Date) {
+              continue;
+            }
+            if (typeof v2 === 'string' || typeof v2 === 'number') {
+              const d2 = toDate(v2);
+              const error2 = d2.toString();
+              if (!(d2 instanceof Date) || error2 === 'Invalid Date') {
+                delete v[key];
+              } else {
+                v[key] = d2;
+              }
+            }
+          }
+        }
       }
     }
-    formatSearchModel(s);
-    if (this.format) {
-      this.format(s);
+  }
+  if (nums && nums.length > 0) {
+    for (const s of nums) {
+      const v = obj[s];
+      if (v) {
+        if (v instanceof Date) {
+          delete obj[s];
+          continue;
+        }
+        if (typeof v === 'number') {
+          continue;
+        }
+        if (typeof v === 'string') {
+          if (!isNaN(v as any)) {
+            delete obj[s];
+            continue;
+          } else {
+            const i = parseFloat(v);
+            obj[s] = i;
+          }
+        } else if (typeof v === 'object') {
+          const keys = Object.keys(v);
+          for (const key of keys) {
+            const v2 = v[key];
+            if (v2 instanceof Date) {
+              delete obj[key];
+              continue;
+            }
+            if (typeof v2 === 'number') {
+              continue;
+            }
+            if (typeof v2 === 'string') {
+              if (!isNaN(v2 as any)) {
+                delete v[key];
+              } else {
+                const i = parseFloat(v2);
+                v[key] = i;
+              }
+            }
+          }
+        }
+      }
     }
-    return s;
   }
-  buildFromRequestBody(req: Request): S {
-    const s = req.body;
-    formatSearchModel(s);
-    if (this.format) {
-      this.format(s);
-    }
-    return s;
-  }
+  return obj;
 }
-export function formatSearchModel<S extends SearchModel>(s: S): S {
-  if (!s.sort) {
-    s.sort = '';
-  }
-  const pageSize: any = (s.hasOwnProperty('limit' ) ? s.limit : 0);
-  const page: any = s.page;
-  const initPageSize: any = (!s.hasOwnProperty('firstLimit') || !s.firstLimit ? pageSize : s.firstLimit);
-  if (!!pageSize) {
-    s.limit = (isNaN(pageSize) ? 0 : Math.floor(parseFloat(pageSize)));
-  }
-  if (!!page) {
-    s.page = (isNaN(page) ? 0 : Math.floor(parseFloat(page)));
-  }
-  if (!!initPageSize) {
-    s.firstLimit = (isNaN(initPageSize) ? 0 : Math.floor(parseFloat(initPageSize)));
-  }
-  if (!s.firstLimit) {
-    s.firstLimit = s.limit;
-  }
-  if (!s.hasOwnProperty('page') || !s.page || s.page < 1) {
-    s.page = 1;
-  }
-  if (!s.hasOwnProperty('keyword') || !s.keyword) {
-    s.keyword = '';
-  }
-  return s;
-}
-*/

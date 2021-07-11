@@ -16,7 +16,7 @@
     "express": "^4.17.1",
     "express-ext": "^0.1.0",
     "mongodb": "^3.6.9",
-    "validator-x": "0.0.6"
+    "validator-x": "0.0.7"
   },
   "devDependencies": {
     "@types/express": "^4.17.12",

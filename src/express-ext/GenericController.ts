@@ -1,13 +1,13 @@
 import {Request, Response} from 'express';
 import {checkId, create, initializeStatus, isTypeError, ResultInfo, StatusConfig, update} from './edit';
 import {LoadController} from './LoadController';
-import {Attributes, ErrorMessage, Model} from './metadata';
+import {Attributes, ErrorMessage} from './metadata';
 import {resources} from './resources';
 import {handleError} from './response';
 import {buildId} from './view';
 
 export interface GenericService<T, ID, R> {
-  metadata?(): Model;
+  metadata?(): Attributes;
   load(id: ID, ctx?: any): Promise<T>;
   insert(obj: T, ctx?: any): Promise<R>;
   update(obj: T, ctx?: any): Promise<R>;
@@ -23,7 +23,7 @@ export class GenericController<T, ID> extends LoadController<T, ID> {
     if (service.metadata) {
       const m = service.metadata();
       if (m) {
-        this.metadata = m.attributes;
+        this.metadata = m;
       }
     }
     this.insert = this.insert.bind(this);
