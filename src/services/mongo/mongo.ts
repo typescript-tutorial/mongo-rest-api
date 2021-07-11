@@ -132,7 +132,7 @@ export function patch<T>(collection: Collection, obj: T, idName?: string): Promi
   return new Promise<number>(((resolve, reject) => {
     revertOne(obj, idName);
     if (!(obj as any)['_id']) {
-      return reject(new Error('Cannot updateOne an Object that do not have _id field.'));
+      return reject(new Error('Cannot patch an object that do not have _id field: ' + JSON.stringify(obj)));
     }
     collection.findOneAndUpdate({ _id: (obj as any)['_id'] }, { $set: obj }, { returnOriginal: false }, (err, result: FindAndModifyWriteOpResultObject<T>) => {
       if (err) {
@@ -144,11 +144,22 @@ export function patch<T>(collection: Collection, obj: T, idName?: string): Promi
     });
   }));
 }
+export function patchWithFilter<T>(collection: Collection, obj: T, filter: FilterQuery<T>): Promise<number> {
+  return new Promise<number>(((resolve, reject) => {
+    collection.findOneAndUpdate(filter, { $set: obj }, { returnOriginal: false }, (err, result: FindAndModifyWriteOpResultObject<T>) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result.ok);
+      }
+    });
+  }));
+}
 export function update<T>(collection: Collection, obj: T, idName?: string): Promise<number> {
   return new Promise<number>(((resolve, reject) => {
     revertOne(obj, idName);
     if (!(obj as any)['_id']) {
-      return reject(new Error('Cannot updateOne an Object that do not have _id field.'));
+      return reject(new Error('Cannot update an object that do not have _id field: ' + JSON.stringify(obj)));
     }
     collection.findOneAndReplace({ _id: (obj as any)['_id'] }, (obj as any), { returnOriginal: false }, (err, result: FindAndModifyWriteOpResultObject<T>) => {
       if (err) {
@@ -160,11 +171,22 @@ export function update<T>(collection: Collection, obj: T, idName?: string): Prom
     });
   }));
 }
+export function updateWithFilter<T>(collection: Collection, obj: T, filter: FilterQuery<T>): Promise<number> {
+  return new Promise<number>(((resolve, reject) => {
+    collection.findOneAndReplace(filter, (obj as any), { returnOriginal: false }, (err, result: FindAndModifyWriteOpResultObject<T>) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result.ok);
+      }
+    });
+  }));
+}
 export function updateFields<T>(collection: Collection, object: T, arr: PushOperator<T>, idName?: string): Promise<T> {
   return new Promise<T>(((resolve, reject) => {
     const obj: any = revertOne(object, idName);
     if (!obj['_id']) {
-      return reject(new Error('Cannot updateOne an Object that do not have _id field.'));
+      return reject(new Error('Cannot update an object that do not have _id field: ' + JSON.stringify(obj)));
     }
     collection.findOneAndUpdate({ _id: obj['_id'] }, { $push: arr }, { returnOriginal: false }, (err, result: FindAndModifyWriteOpResultObject<T>) => {
       if (err) {
@@ -248,6 +270,20 @@ export function upsert<T>(collection: Collection, object: T, idName?: string): P
     return insert(collection, object);
   }
 }
+export function upsertWithFilter<T>(collection: Collection, obj: T, filter: FilterQuery<T>): Promise<number> {
+  return new Promise<number>(((resolve, reject) => {
+    collection.findOneAndUpdate(filter, { $set: obj }, {
+      upsert: true,
+      returnOriginal: false,
+    }, (err, result: FindAndModifyWriteOpResultObject<T>) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result.ok);
+      }
+    });
+  }));
+}
 export function upsertMany<T>(collection: Collection, objects: T[], idName?: string): Promise<number> {
   return new Promise<number>(((resolve, reject) => {
     const operations = [];
@@ -319,7 +355,7 @@ export function deleteFields<T>(collection: Collection, object: T, filter: PullO
   return new Promise<number>(((resolve, reject) => {
     const obj: any = revertOne(object, idName);
     if (!obj['_id']) {
-      return reject(new Error('Cannot updateOne an Object that do not have _id field.'));
+      return reject(new Error('Cannot delete an object that do not have _id field: ' + JSON.stringify(obj)));
     }
     collection.findOneAndUpdate({ _id: obj['_id'] }, { $pull: filter }, {
       returnOriginal: false,
@@ -504,6 +540,8 @@ export class PointMapper<T> {
     if (!longitude) {
       this.longitude = 'longitude';
     }
+    this.fromPoint = this.fromPoint.bind(this);
+    this.toPoint = this.toPoint.bind(this);
   }
   fromPoint(model: T): T {
     return fromPoint(model, this.geo, this.latitude, this.longitude);

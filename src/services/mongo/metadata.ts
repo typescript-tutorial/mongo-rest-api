@@ -1,3 +1,8 @@
+export function getCollectionName(model: Model, collectionName?: string) {
+  const n: string = (collectionName ? collectionName : (model.collection ? model.collection : (model.source ? model.source : model.name)));
+  return n;
+}
+
 interface StringMap {
   [key: string]: string;
 }
@@ -22,7 +27,7 @@ export interface Attribute {
   format?: FormatType;
   required?: boolean;
   match?: string;
-  defaultValue?: any;
+  defaultValue?: string|number|Date;
   key?: boolean;
   unique?: boolean;
   noinsert?: boolean;
@@ -53,31 +58,39 @@ export interface Metadata {
   objectId?: boolean;
   map?: StringMap;
 }
-export function build(model?: Model): Metadata {
+export function getVersion(attributes?: Attributes): string {
+  const keys: string[] = Object.keys(attributes);
+  for (const key of keys) {
+    const attr: Attribute = attributes[key];
+    if (attr.version === true) {
+      return key;
+    }
+  }
+  return undefined;
+}
+export function build(attributes?: Attributes): Metadata {
   const sub: Metadata = {id: 'id'};
-  if (!model) {
+  if (!attributes) {
     return sub;
   }
-  const keys: string[] = Object.keys(model.attributes);
+  const keys: string[] = Object.keys(attributes);
   for (const key of keys) {
-    const attr: Attribute = model.attributes[key];
-    if (attr) {
-      if (attr.key === true) {
-        const meta: Metadata = {id: key};
-        meta.objectId = (attr.type === 'ObjectId' ? true : false);
-        meta.map = buildMap(model);
-        return meta;
-      }
+    const attr: Attribute = attributes[key];
+    if (attr.key === true) {
+      const meta: Metadata = {id: key};
+      meta.objectId = (attr.type === 'ObjectId' ? true : false);
+      meta.map = buildMap(attributes);
+      return meta;
     }
   }
   return sub;
 }
-export function buildMap(model: Model): StringMap {
+export function buildMap(attributes?: Attributes): StringMap {
   const map: any = {};
-  const keys: string[] = Object.keys(model.attributes);
+  const keys: string[] = Object.keys(attributes);
   let c = 0;
   for (const key of keys) {
-    const attr: Attribute = model.attributes[key];
+    const attr: Attribute = attributes[key];
     if (attr) {
       attr.name = key;
       if (attr.field && attr.field.length > 0 && attr.field !== key) {

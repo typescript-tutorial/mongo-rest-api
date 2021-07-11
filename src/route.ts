@@ -6,6 +6,7 @@ export function route(app: Application, ctx: ApplicationContext): void {
   app.get('/health', ctx.health.check);
   app.get('/locations', ctx.location.all);
   app.get('/locations/:id', ctx.location.load);
+  app.post('/locations/search', ctx.location.search);
 
   app.get('/users', user.all);
   app.post('/users/search', user.search);

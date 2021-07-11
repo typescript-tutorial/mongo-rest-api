@@ -1,20 +1,20 @@
 import {ObjectId} from 'bson';
 import {Collection} from 'mongodb';
-import {build, Model} from './metadata';
+import {Attributes, build} from './metadata';
 import {count, findOne, findWithMap, StringMap} from './mongo';
 
 export class MongoLoader<T, ID> {
-  protected model: Model;
+  protected attributes: Attributes;
   protected idName?: string;
   protected idObjectId?: boolean;
   protected map?: StringMap;
 
-  constructor(protected collection: Collection, model: Model|string, private mp?: (v: T) => T) {
-    if (typeof model === 'string') {
-      this.idName = model;
+  constructor(protected collection: Collection, attributes: Attributes|string, protected mp?: (v: T) => T) {
+    if (typeof attributes === 'string') {
+      this.idName = attributes;
     } else {
-      this.model = model;
-      const meta = build(model);
+      this.attributes = attributes;
+      const meta = build(attributes);
       this.idName = meta.id;
       this.idObjectId = meta.objectId;
       this.map = meta.map;
@@ -28,8 +28,8 @@ export class MongoLoader<T, ID> {
   id(): string {
     return this.idName;
   }
-  metadata(): Model {
-    return this.model;
+  metadata(): Attributes {
+    return this.attributes;
   }
   all(): Promise<T[]> {
     if (this.mp) {
