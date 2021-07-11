@@ -1,5 +1,5 @@
 import {Request, Response} from 'express';
-import {GenericSearchController, SearchModel, SearchResult} from 'express-ext';
+import {GenericSearchController, SearchModel, SearchResult} from '../express-ext';
 import {User} from '../models/User';
 import {UserService} from '../services/UserService';
 
@@ -23,6 +23,7 @@ export class UserController extends GenericSearchController<User, string, UserSM
   }
 
   all(req: Request, res: Response) {
+    console.log('enter user all');
     this.userService.all()
       .then(users => res.status(200).json(users), err => res.status(500).end(err));
   }

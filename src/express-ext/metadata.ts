@@ -19,6 +19,7 @@ export interface Attribute {
   type?: DataType;
   format?: FormatType;
   required?: boolean;
+  key?: boolean;
   length?: number;
   min?: number;
   max?: number;

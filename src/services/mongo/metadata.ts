@@ -26,8 +26,8 @@ export interface Attribute {
   type?: DataType;
   format?: FormatType;
   required?: boolean;
-  match?: string;
-  defaultValue?: string|number|Date;
+  match?: MatchType;
+  default?: string|number|Date;
   key?: boolean;
   unique?: boolean;
   noinsert?: boolean;

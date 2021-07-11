@@ -10,7 +10,7 @@ export interface SearchResult<T> {
 export function buildSearchResult<T>(collection: Collection, query: FilterQuery<T>, sort?: SortOptionObject<T>, limit?: number, skip?: number, fields?: string[]): Promise<SearchResult<T>> {
   const project = buildProject(fields);
   if (limit) {
-    if (!skip) {
+    if (!skip || isNaN(skip)) {
       skip = 0;
     }
     const p1 = find(collection, query, sort, limit, skip, project);
@@ -39,7 +39,7 @@ export function buildSort<T>(sort: string, map?: Attributes|StringMap): SortOpti
           field = st.substr(1);
         }
         const sortType = (tp === '-' ? -1 : 1);
-        sort2[getField(field.trim())] = sortType;
+        sort2[getField(field.trim(), map)] = sortType;
       }
     }
   }

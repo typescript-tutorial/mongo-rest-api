@@ -57,18 +57,18 @@ export async function findWithMap<T>(collection: Collection, query: FilterQuery<
   const objects = await find<T>(collection, query, sort, limit, skip, project);
   for (const obj of objects) {
     if (idName && idName !== '') {
-      (obj as any)[idName] = (obj as any)['_id'];
+      obj[idName] = obj['_id'];
     }
-    delete (obj as any)['_id'];
+    delete obj['_id'];
   }
   if (!m) {
     return objects;
   } else {
-    return await mapArray(objects, m);
+    return mapArray(objects, m);
   }
 }
 export function find<T>(collection: Collection, query: FilterQuery<T>, sort?: string | [string, number][] | SortOptionObject<T>, limit?: number, skip?: number, project?: SchemaMember<T, ProjectionOperators | number | boolean | any>): Promise<T[]> {
-  console.log('limit ' + limit);
+  console.log('limit ' + JSON.stringify(query));
   return new Promise<T[]>((resolve, reject) => {
     let cursor = collection.find(query);
     if (sort) {

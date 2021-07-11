@@ -2,8 +2,8 @@ import {FilterQuery} from 'mongodb';
 import {Attribute, Attributes} from './metadata';
 
 export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
-  const a = new Array<[string, [any, any][]]>();
-  const b = new Array<[any, any]>();
+  const a: any = {};
+  const b: any = {};
   const keys = Object.keys(s);
   for (const key of keys) {
     const v = s[key];
@@ -13,23 +13,72 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
         const attr: Attribute = attrs[key];
         if (attr) {
           field = (attr.field ? attr.field : key);
-          if (typeof v === 'object') {
-            if (attr.type === 'date' && isDateRange(v) ) {
-              if (v['endDate'] && v['startDate']) {
-                b['$lte'] = new Date(v['endDate']);
-                b['$gte'] = new Date(v['startDate']);
-              } else if (v['endDate']) {
-                b['$lte'] = new Date(v['endDate']);
-              } else if (v['startDate']) {
-                b['$gte'] = new Date(v['startDate']);
-              }
-              const json1 = Object.assign({}, b);
-              a[field] = json1;
-            } else if (attr.type === 'ObjectId') {
-              a[field] = v;
+          if (attr.key) {
+            field = '_id';
+          }
+          if (typeof v === 'string') {
+            console.log('enter string ' + v);
+            const exg = buildMatch(v, attr.match);
+            console.log('enter string2 ' + JSON.stringify(exg));
+            a[field] = exg;
+          } else if (v instanceof Date) {
+            if (attr.match === 'max') {
+              b['$lte'] = v;
+            } else {
+              b['$gte'] = v;
             }
-          } else if (typeof v === 'string' && v.length > 0) {
-            a[field] = buildMatch(v, attr.match);
+            const json1 = Object.assign({}, b);
+            a[field] = json1;
+          } else if (typeof v === 'number') {
+            if (attr.match === 'max') {
+              b['$lte'] = v;
+            } else {
+              b['$gte'] = v;
+            }
+            const json1 = Object.assign({}, b);
+            a[field] = json1;
+          } else if (attr.type === 'ObjectId') {
+            a[field] = v;
+          } else if (typeof v === 'object') {
+            if (attr.type === 'date' || attr.type === 'datetime') {
+              if (isDateRange(v)) {
+                if (v['max']) {
+                  b['$lte'] = v['max'];
+                } else if (v['endDate']) {
+                  b['$lte'] = v['endDate'];
+                } else if (v['upper']) {
+                  b['$lt'] = v['upper'];
+                } else if (v['endTime']) {
+                  b['$lt'] = v['endTime'];
+                }
+                if (v['min']) {
+                  b['$gte'] = v['min'];
+                } else if (v['startTime']) {
+                  b['$gte'] = v['startTime'];
+                } else if (v['startDate']) {
+                  b['$gte'] = v['startDate'];
+                } else if (v['lower']) {
+                  b['$gt'] = v['lower'];
+                }
+                const json1 = Object.assign({}, b);
+                a[field] = json1;
+              }
+            } else if (attr.type === 'number' || attr.type === 'integer') {
+              if (isNumberRange(v)) {
+                if (v['max']) {
+                  b['$lte'] = v['max'];
+                } else if (v['upper']) {
+                  b['$lt'] = v['upper'];
+                }
+                if (v['min']) {
+                  b['$gte'] = v['min'];
+                } else if (v['lower']) {
+                  b['$gt'] = v['lower'];
+                }
+                const json1 = Object.assign({}, b);
+                a[field] = json1;
+              }
+            }
           }
         } else if (typeof v === 'string' && v.length > 0) {
           a[field] = buildMatch(v, '');
@@ -51,10 +100,23 @@ export function buildMatch(v: string, match: string): string|RegExp {
     return new RegExp(`\\w*${v}\\w*`);
   }
 }
-export function isDateRange(obj: any): boolean {
-  if (!obj.startDate && !obj.endDate) {
-    return false;
-  } else {
-    return true;
+export function isDateRange<T>(obj: T): boolean {
+  const keys: string[] = Object.keys(obj);
+  for (const key of keys) {
+    const v = obj[key];
+    if (!(v instanceof Date)) {
+      return false;
+    }
   }
+  return true;
+}
+export function isNumberRange<T>(obj: T): boolean {
+  const keys: string[] = Object.keys(obj);
+  for (const key of keys) {
+    const v = obj[key];
+    if (typeof v !== 'number') {
+      return false;
+    }
+  }
+  return true;
 }

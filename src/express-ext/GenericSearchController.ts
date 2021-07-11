@@ -28,6 +28,7 @@ export class GenericSearchController<T, ID, S extends SearchModel> extends Gener
     const s = fromRequest<S>(req);
     const l = getParameters(s);
     const s2 = format(s, this.dates, this.numbers);
+    console.log('s: ' + JSON.stringify(s2) + ' ' + JSON.stringify(l));
     this.find(s2, l.limit, l.skipOrRefId, l.fields)
       .then(result => jsonResult(res, result, this.csv, s.fields, this.config))
       .catch(err => handleError(err, res, this.log));

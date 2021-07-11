@@ -26,7 +26,7 @@ export function createContext(db: Db): ApplicationContext {
   const locationController = new LocationController(null, s, locationService);
   // const queryUser: (s: UserSM, m?: Attributes) => FilterQuery<User> = buildQuery as any;
   const searchUser = new SearchBuilder<User, UserSM>(db.collection('users'), buildQuery as any, userModel.attributes);
-  const userService = new MongoUserService(db.collection('location'));
+  const userService = new MongoUserService(db.collection('users'));
   const userController = new UserController(log, searchUser.search, userService);
   const mongoChecker = new MongoChecker(db);
   const healthController = new HealthController([mongoChecker]);

@@ -9,7 +9,8 @@ export const userModel: Model = {
   name: 'user',
   attributes: {
     id: {
-      key: true
+      key: true,
+      match: 'equal'
     },
     username: {
       match: 'contain'
@@ -21,6 +22,9 @@ export const userModel: Model = {
     phone: {
       format: 'phone',
       required: true
+    },
+    age: {
+      type: 'number',
     },
     dateOfBirth: {
       type: 'datetime'
