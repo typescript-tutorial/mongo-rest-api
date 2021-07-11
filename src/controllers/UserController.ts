@@ -1,5 +1,5 @@
 import {Request, Response} from 'express';
-import {GenericSearchController, SearchModel, SearchResult} from '../express-ext';
+import {GenericSearchController, GenericSearchHandler, SearchModel, SearchResult} from '../express-ext';
 import {User} from '../models/User';
 import {UserService} from '../services/UserService';
 
@@ -9,8 +9,8 @@ export interface UserSM extends SearchModel {
   email?: string;
   phone?: string;
 }
-export class UserController extends GenericSearchController<User, string, UserSM> {
-  constructor(log: (msg: string, ctx?: any) => void, search: (s: UserSM, limit?: number, skip?: number, ctx?: any) => Promise<SearchResult<User>>, private userService: UserService) {
+export class UserController extends GenericSearchHandler<User, string, UserSM> {
+  constructor(log: (msg: string, ctx?: any) => void, search: (s: UserSM, limit?: number, skip?: number|string, fields?: string[]) => Promise<SearchResult<User>>, private userService: UserService) {
     super(log, search, userService);
     this.all = this.all.bind(this);
     /*
@@ -23,7 +23,6 @@ export class UserController extends GenericSearchController<User, string, UserSM
   }
 
   all(req: Request, res: Response) {
-    console.log('enter user all');
     this.userService.all()
       .then(users => res.status(200).json(users), err => res.status(500).end(err));
   }

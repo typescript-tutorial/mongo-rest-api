@@ -17,12 +17,18 @@ export class MongoWriter<T, ID> extends MongoLoader<T, ID> {
     this.delete = this.delete.bind(this);
   }
   insert(obj: T): Promise<number> {
+    if (this.toPoint) {
+      obj = this.toPoint(obj);
+    }
     if (this.version && this.version.length > 0) {
       obj[this.version] = 1;
     }
     return insert(this.collection, obj, this.idName, true);
   }
   update(obj: T): Promise<number> {
+    if (this.toPoint) {
+      obj = this.toPoint(obj);
+    }
     if (!this.version) {
       return update(this.collection, obj, this.idName);
     } else {
@@ -43,6 +49,9 @@ export class MongoWriter<T, ID> extends MongoLoader<T, ID> {
     }
   }
   patch(obj: T): Promise<number> {
+    if (this.toPoint) {
+      obj = this.toPoint(obj);
+    }
     if (!this.version) {
       return patch(this.collection, obj, this.idName);
     } else {
@@ -63,6 +72,9 @@ export class MongoWriter<T, ID> extends MongoLoader<T, ID> {
     }
   }
   save(obj: T): Promise<number> {
+    if (this.toPoint) {
+      obj = this.toPoint(obj);
+    }
     if (!this.version) {
       return upsert(this.collection, obj, this.idName);
     } else {

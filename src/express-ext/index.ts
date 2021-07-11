@@ -1,3 +1,17 @@
+import {GenericController} from './GenericController';
+import {GenericSearchController} from './GenericSearchController';
+import {HealthController} from './HealthController';
+import {LoadController} from './LoadController';
+import {LoadSearchController} from './LoadSearchController';
+import {SearchController} from './SearchController';
+
+export {HealthController as HealthHandler};
+export {LoadController as LoadHandler};
+export {GenericController as GenericHandler};
+export {SearchController as SearchHandler};
+export {LoadSearchController as LoadSearchHandler};
+export {GenericSearchController as GenericSearchHandler};
+
 export * from './health';
 export * from './HealthController';
 export * from './metadata';

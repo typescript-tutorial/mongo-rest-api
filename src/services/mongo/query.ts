@@ -17,9 +17,7 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
             field = '_id';
           }
           if (typeof v === 'string') {
-            console.log('enter string ' + v);
             const exg = buildMatch(v, attr.match);
-            console.log('enter string2 ' + JSON.stringify(exg));
             a[field] = exg;
           } else if (v instanceof Date) {
             if (attr.match === 'max') {

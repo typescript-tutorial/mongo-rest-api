@@ -68,7 +68,6 @@ export async function findWithMap<T>(collection: Collection, query: FilterQuery<
   }
 }
 export function find<T>(collection: Collection, query: FilterQuery<T>, sort?: string | [string, number][] | SortOptionObject<T>, limit?: number, skip?: number, project?: SchemaMember<T, ProjectionOperators | number | boolean | any>): Promise<T[]> {
-  console.log('limit ' + JSON.stringify(query));
   return new Promise<T[]>((resolve, reject) => {
     let cursor = collection.find(query);
     if (sort) {

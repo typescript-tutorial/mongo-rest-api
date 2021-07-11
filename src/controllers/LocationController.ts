@@ -8,7 +8,7 @@ export interface LocationSM extends SearchModel {
   type?: string;
 }
 export class LocationController {
-  constructor(log: (msg: string, ctx?: any) => void, private find: (s: LocationSM, limit?: number, skip?: number, ctx?: any) => Promise<SearchResult<Location>>, private locationService: LocationService) {
+  constructor(log: (msg: string, ctx?: any) => void, private find: (s: LocationSM, limit?: number, skip?: number|string, fields?: string[]) => Promise<SearchResult<Location>>, private locationService: LocationService) {
     this.search = this.search.bind(this);
     this.all = this.all.bind(this);
     this.load = this.load.bind(this);
@@ -22,7 +22,7 @@ export class LocationController {
   search(req: Request, res: Response) {
     const s = fromRequest<LocationSM>(req);
     const l = getParameters(s);
-    this.find(s, l.limit, l.skip, l.refId)
+    this.find(s, l.limit, l.skipOrRefId, l.fields)
       .then(result => jsonResult(res, result, undefined, undefined, undefined))
       .catch(err => handleError(err, res, undefined));
   }
