@@ -1,7 +1,7 @@
 import {Request, Response} from 'express';
 import {Attribute, Attributes} from './metadata';
 import {handleError} from './response';
-import {buildId, buildKeys} from './view';
+import {buildAndCheckId, buildKeys} from './view';
 
 export interface ViewService<T, ID> {
   metadata?(): Attributes;
@@ -50,16 +50,16 @@ export class LoadController<T, ID> {
     this.keys = getKeysFunc(viewService, keys);
   }
   load(req: Request, res: Response) {
-    const id = buildId<ID>(req, this.keys);
-    if (!id) {
-      return res.status(400).send('invalid parameters');
+    const id = buildAndCheckId<ID>(req, res, this.keys);
+    if (id) {
+      this.view(id).then(obj => respondModel(obj, res)).catch(err => handleError(err, res, this.log));
     }
-    this.view(id).then(obj => {
-      if (obj) {
-        res.status(200).json(obj).end();
-      } else {
-        res.status(404).json(null).end();
-      }
-    }).catch(err => handleError(err, res, this.log));
+  }
+}
+export function respondModel<T>(obj: T, res: Response): void {
+  if (obj) {
+    res.status(200).json(obj).end();
+  } else {
+    res.status(404).json(null).end();
   }
 }

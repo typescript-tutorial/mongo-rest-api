@@ -71,7 +71,7 @@ export function create<T>(res: Response, status: StatusConfig, obj: T, insert: (
         const r: ResultInfo<T> = {status: status.duplicate_key};
         res.status(201).json(r).end();
       } else {
-        res.status(500).send('Internal Server Error');
+        res.status(500).end('Internal Server Error');
       }
     } else {
       res.status(200).json(result).end();

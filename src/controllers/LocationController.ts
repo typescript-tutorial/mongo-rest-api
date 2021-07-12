@@ -1,5 +1,5 @@
 import {Request, Response} from 'express';
-import {fromRequest, GenericSearchController, getParameters, handleError, jsonResult, SearchController, SearchModel, SearchResult} from '../express-ext';
+import {fromRequest, GenericSearchController, GenericSearchHandler, getParameters, handleError, jsonResult, SearchController, SearchModel, SearchResult} from '../express-ext';
 import {Location} from '../models/Location';
 import {LocationService} from '../services/LocationService';
 
@@ -7,11 +7,12 @@ export interface LocationSM extends SearchModel {
   id?: string;
   type?: string;
 }
-export class LocationController {
-  constructor(log: (msg: string, ctx?: any) => void, private find: (s: LocationSM, limit?: number, skip?: number|string, fields?: string[]) => Promise<SearchResult<Location>>, private locationService: LocationService) {
-    this.search = this.search.bind(this);
+export class LocationController extends GenericSearchHandler<Location, string, LocationSM> {
+  constructor(log: (msg: string, ctx?: any) => void, find: (s: LocationSM, limit?: number, skip?: number|string, fields?: string[]) => Promise<SearchResult<Location>>, private locationService: LocationService) {
+    super(log, find, locationService);
+    // this.search = this.search.bind(this);
     this.all = this.all.bind(this);
-    this.load = this.load.bind(this);
+    // this.load = this.load.bind(this);
     /*
     this.insert = this.insert.bind(this);
     this.update = this.update.bind(this);
@@ -19,16 +20,17 @@ export class LocationController {
     this.delete = this.delete.bind(this);
     */
   }
+  all(req: Request, res: Response) {
+    this.locationService.all()
+      .then(locations => res.status(200).json(locations).end).catch(err => res.status(500).end(err));
+  }
+  /*
   search(req: Request, res: Response) {
     const s = fromRequest<LocationSM>(req);
     const l = getParameters(s);
     this.find(s, l.limit, l.skipOrRefId, l.fields)
       .then(result => jsonResult(res, result, undefined, undefined, undefined))
       .catch(err => handleError(err, res, undefined));
-  }
-  all(req: Request, res: Response) {
-    this.locationService.all()
-      .then(locations => res.status(200).json(locations).end).catch(err => res.status(500).end(err));
   }
   load(req: Request, res: Response) {
     const id = req.params['id'];

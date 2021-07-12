@@ -1,10 +1,10 @@
 import {Request, Response} from 'express';
 import {checkId, create, initializeStatus, isTypeError, ResultInfo, StatusConfig, update} from './edit';
 import {LoadController} from './LoadController';
-import {Attributes, ErrorMessage} from './metadata';
+import {Attribute, Attributes, ErrorMessage} from './metadata';
 import {resources} from './resources';
 import {handleError} from './response';
-import {buildId} from './view';
+import {buildAndCheckId, buildId} from './view';
 
 export interface GenericService<T, ID, R> {
   metadata?(): Attributes;
@@ -26,6 +26,7 @@ export class GenericController<T, ID> extends LoadController<T, ID> {
         this.metadata = m;
       }
     }
+    this.create = this.create.bind(this);
     this.insert = this.insert.bind(this);
     this.update = this.update.bind(this);
     this.patch = this.patch.bind(this);
@@ -35,100 +36,92 @@ export class GenericController<T, ID> extends LoadController<T, ID> {
       this.validate = v.validate;
     }
   }
+  create(req: Request, res: Response) {
+    return this.insert(req, res);
+  }
   insert(req: Request, res: Response) {
-    const obj = req.body;
-    if (!obj) {
-      return res.status(400).end('The request body cannot be empty.');
-    }
-    if (this.validate) {
-      const l = this.log;
-      this.validate(obj).then(errors => {
-        if (errors && errors.length > 0) {
-          const r: ResultInfo<T> = {status: this.status.validation_error, errors};
-          res.status(getStatusCode(errors)).json(r);
-        } else {
-          create(res, this.status, obj, this.service.insert, this.log);
-        }
-      }).catch(err => handleError(err, res, l));
-    } else {
-      create(res, this.status, obj, this.service.insert, this.log);
-    }
+    validateAndCreate(req, res, this.status, this.service.insert, this.log, this.validate);
   }
   update(req: Request, res: Response) {
-    const obj = req.body;
-    if (!obj) {
-      return res.status(400).end('The request body cannot be empty.');
-    }
-    const id = buildId<ID>(req, this.keys);
-    if (!id) {
-      return res.status(400).end('Invalid parameters');
-    }
-    const ok = checkId<T, ID>(obj, id, this.keys);
-    if (!ok) {
-      return res.status(400).end('Invalid parameters');
-    }
-    if (this.validate) {
-      const l = this.log;
-      this.validate(obj).then(errors => {
-        if (errors && errors.length > 0) {
-          const r: ResultInfo<T> = {status: this.status.validation_error, errors};
-          res.status(getStatusCode(errors)).json(r);
-        } else {
-          update(res, this.status, obj, this.service.update, this.log);
-        }
-      }).catch(err => handleError(err, res, l));
-    } else {
-      update(res, this.status, obj, this.service.update, this.log);
+    const id = buildAndCheckIdWithBody<T, ID>(req, res, this.keys);
+    if (id) {
+      validateAndUpdate(res, this.status, req.body, false, this.service.update, this.log, this.validate);
     }
   }
   patch(req: Request, res: Response) {
-    const obj = req.body;
-    if (!obj) {
-      return res.status(400).end('The request body cannot be empty.');
-    }
-    const id = buildId<ID>(req, this.keys);
-    if (!id) {
-      return res.status(400).end('Invalid parameters');
-    }
-    const ok = checkId<T, ID>(obj, id, this.keys);
-    if (!ok) {
-      return res.status(400).end('Invalid parameters');
-    }
-    if (this.validate) {
-      const l = this.log;
-      this.validate(obj, true).then(errors => {
-        if (errors && errors.length > 0) {
-          const r: ResultInfo<T> = {status: this.status.validation_error, errors};
-          res.status(getStatusCode(errors)).json(r);
-        } else {
-          update(res, this.status, obj, this.service.patch, this.log);
-        }
-      }).catch(err => handleError(err, res, l));
-    } else {
-      update(res, this.status, obj, this.service.update, this.log);
+    const id = buildAndCheckIdWithBody<T, ID>(req, res, this.keys);
+    if (id) {
+      validateAndUpdate(res, this.status, req.body, true, this.service.patch, this.log, this.validate);
     }
   }
   delete(req: Request, res: Response) {
-    const id = buildId<ID>(req, this.keys);
-    if (!id) {
-      return res.status(400).end('invalid parameters');
+    const id = buildAndCheckId<ID>(req, res, this.keys);
+    if (id) {
+      this.service.delete(id).then(count => {
+        res.status(getDeleteStatus(count)).json(count).end();
+      }).catch(err => handleError(err, res, this.log));
     }
-    this.service.delete(id).then(count => {
-      if (count > 0) {
-        res.status(200).json(count);
-      } else if (count === 0) {
-        res.status(404).json(count);
-      } else {
-        res.status(409).json(count);
-      }
-    }).catch(err => {
-      if (this.log) {
-        this.log(err as any);
-      }
-      res.status(500).end('Internal Server Error');
-    });
   }
 }
-function getStatusCode(errs: ErrorMessage[]): number {
+export function validateAndCreate<T>(req: Request, res: Response, status: StatusConfig, save: (obj: T, ctx?: any) => Promise<number|ResultInfo<T>>, log: (msg: string, ctx?: any) => void, validate?: (obj: T, patch?: boolean) => Promise<ErrorMessage[]>): void {
+  const obj = req.body;
+  if (!obj || obj === '') {
+    return res.status(400).end('The request body cannot be empty.');
+  }
+  if (validate) {
+    validate(obj).then(errors => {
+      if (errors && errors.length > 0) {
+        const r: ResultInfo<T> = {status: status.validation_error, errors};
+        res.status(getStatusCode(errors)).json(r).end();
+      } else {
+        create(res, status, obj, save, log);
+      }
+    }).catch(err => handleError(err, res, log));
+  } else {
+    create(res, status, obj, save, log);
+  }
+}
+export function validateAndUpdate<T>(res: Response, status: StatusConfig, obj: T, isPatch: boolean, save: (obj: T, ctx?: any) => Promise<number|ResultInfo<T>>, log: (msg: string, ctx?: any) => void, validate?: (obj: T, patch?: boolean) => Promise<ErrorMessage[]>):  void {
+  if (validate) {
+    validate(obj, isPatch).then(errors => {
+      if (errors && errors.length > 0) {
+        const r: ResultInfo<T> = {status: status.validation_error, errors};
+        res.status(getStatusCode(errors)).json(r).end();
+      } else {
+        update(res, status, obj, save, log);
+      }
+    }).catch(err => handleError(err, res, log));
+  } else {
+    update(res, status, obj, save, log);
+  }
+}
+export function buildAndCheckIdWithBody<T, ID>(req: Request, res: Response, keys?: Attribute[]): ID {
+  const obj = req.body;
+  if (!obj || obj === '') {
+    res.status(400).end('The request body cannot be empty.');
+    return undefined;
+  }
+  const id = buildId<ID>(req, keys);
+  if (!id) {
+    res.status(400).end('Invalid parameters');
+    return undefined;
+  }
+  const ok = checkId<T, ID>(obj, id, keys);
+  if (!ok) {
+    res.status(400).end('Invalid parameters');
+    return undefined;
+  }
+  return id;
+}
+export function getDeleteStatus(count: number): number {
+  if (count > 0) {
+    return 200;
+  } else if (count === 0) {
+    return 404;
+  } else {
+    return 409;
+  }
+}
+export function getStatusCode(errs: ErrorMessage[]): number {
   return (isTypeError(errs) ? 400 : 422);
 }

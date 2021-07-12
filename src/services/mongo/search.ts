@@ -7,11 +7,12 @@ export interface SearchResult<T> {
   total?: number;
   last?: boolean;
 }
-export function buildSearchResult<T>(collection: Collection, query: FilterQuery<T>, sort?: SortOptionObject<T>, limit?: number, skip?: number, fields?: string[], idName?: string, map?: StringMap, mp?: (v: T) => T): Promise<SearchResult<T>> {
+export function buildSearchResult<T>(collection: Collection, query: FilterQuery<T>, sort?: SortOptionObject<T>, limit?: number, skipOrRef?: number|string, fields?: string[], idName?: string, map?: StringMap, mp?: (v: T) => T): Promise<SearchResult<T>> {
   const project = buildProject(fields);
   if (limit) {
-    if (!skip || isNaN(skip)) {
-      skip = 0;
+    let skip = 0;
+    if (skipOrRef && typeof skipOrRef === 'number' && skipOrRef >= 0) {
+      skip = skipOrRef;
     }
     const p1 = find(collection, query, sort, limit, skip, project);
     const p2 = count(collection, query);

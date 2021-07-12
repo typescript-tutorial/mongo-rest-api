@@ -20,7 +20,7 @@ export function log(msg: any): void {
 resources.createValidator = createValidator;
 export function createContext(db: Db): ApplicationContext {
   const mapper = new PointMapper('location');
-  const locationService = new MongoLocationService(db);
+  const locationService = new MongoLocationService(db.collection('location'), mapper);
   const searchLocation = new SearchBuilder<Location, LocationSM>(db.collection('location'), buildQuery as any, locationModel.attributes, mapper.fromPoint);
   const s = searchLocation.search;
   const locationController = new LocationController(null, s, locationService);

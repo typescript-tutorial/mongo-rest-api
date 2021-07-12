@@ -1,6 +1,14 @@
-import {Request} from 'express';
+import {Request, Response} from 'express';
 import {Attribute, Attributes} from './metadata';
 
+export function buildAndCheckId<ID>(req: Request, res: Response, keys?: Attribute[]) {
+  const id = buildId<ID>(req, keys);
+  if (!id) {
+    res.status(400).end('invalid parameters');
+    return null;
+  }
+  return id;
+}
 export function buildId<T>(req: Request, attrs?: Attribute[]): T {
   if (!attrs) {
     const id = req.params['id'];

@@ -4,46 +4,42 @@ import {Attributes, build} from './metadata';
 import {count, findOne, findWithMap, StringMap} from './mongo';
 
 export class MongoLoader<T, ID> {
+  id?: string;
   protected attributes: Attributes;
-  protected idName?: string;
   protected idObjectId?: boolean;
   protected map?: StringMap;
 
-  constructor(protected collection: Collection, attributes: Attributes|string, protected mp?: (v: T) => T) {
+  constructor(protected collection: Collection, attributes: Attributes|string, protected fromBson?: (v: T) => T) {
     if (typeof attributes === 'string') {
-      this.idName = attributes;
+      this.id = attributes;
     } else {
       this.attributes = attributes;
       const meta = build(attributes);
-      this.idName = meta.id;
+      this.id = meta.id;
       this.idObjectId = meta.objectId;
       this.map = meta.map;
     }
-    this.id = this.id.bind(this);
     this.metadata = this.metadata.bind(this);
     this.all = this.all.bind(this);
     this.load = this.load.bind(this);
     this.exist = this.exist.bind(this);
   }
-  id(): string {
-    return this.idName;
-  }
   metadata(): Attributes {
     return this.attributes;
   }
   all(): Promise<T[]> {
-    if (this.mp) {
-      return findWithMap<T>(this.collection, {}, this.idName, this.map).then(v => v.map(o => this.mp(o)));
+    if (this.fromBson) {
+      return findWithMap<T>(this.collection, {}, this.id, this.map).then(v => v.map(o => this.fromBson(o)));
     } else {
-      return findWithMap<T>(this.collection, {}, this.idName, this.map);
+      return findWithMap<T>(this.collection, {}, this.id, this.map);
     }
   }
   load(id: ID): Promise<T> {
     const query: any = { _id: (this.idObjectId ? new ObjectId('' + id) : '' + id) };
-    if (this.mp) {
-      return findOne<T>(this.collection, query, this.idName, this.map).then(v => this.mp(v));
+    if (this.fromBson) {
+      return findOne<T>(this.collection, query, this.id, this.map).then(v => this.fromBson(v));
     } else {
-      return findOne<T>(this.collection, query, this.idName, this.map);
+      return findOne<T>(this.collection, query, this.id, this.map);
     }
   }
   exist(id: ID): Promise<boolean> {
