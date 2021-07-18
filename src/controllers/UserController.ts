@@ -13,7 +13,8 @@ export class UserController {
 
   all(req: Request, res: Response) {
     this.userService.all()
-      .then(users => res.status(200).json(users), err => res.status(500).send(err));
+      .then(users => res.status(200).json(users))
+      .catch(err => res.status(500).send(err));
   }
   load(req: Request, res: Response) {
     const id = req.params['id'];
@@ -27,14 +28,14 @@ export class UserController {
         } else {
           res.status(404).json(null);
         }
-      }).catch(err => res.status(500).send(err));
+      })
+      .catch(err => res.status(500).send(err));
   }
   insert(req: Request, res: Response) {
     const user = req.body;
     this.userService.insert(user)
-      .then(result => {
-        res.status(200).json(result);
-      }).catch(err => res.status(500).send(err));
+      .then(result => res.status(200).json(result))
+      .catch(err => res.status(500).send(err));
   }
   update(req: Request, res: Response) {
     const id = req.params['id'];
@@ -68,6 +69,9 @@ export class UserController {
   }
   delete(req: Request, res: Response) {
     const id = req.params['id'];
+    if (!id || id.length === 0) {
+      return res.status(400).send('Id cannot be empty');
+    }
     this.userService.delete(id)
       .then(result => res.status(200).json(result))
       .catch(err => res.status(500).send(err));
