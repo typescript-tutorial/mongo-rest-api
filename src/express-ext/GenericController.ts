@@ -1,9 +1,9 @@
 import {Request, Response} from 'express';
 import {checkId, create, initializeStatus, isTypeError, ResultInfo, StatusConfig, update} from './edit';
+import {handleError} from './http';
 import {LoadController} from './LoadController';
 import {Attribute, Attributes, ErrorMessage} from './metadata';
 import {resources} from './resources';
-import {handleError} from './response';
 import {buildAndCheckId, buildId} from './view';
 
 export interface GenericService<T, ID, R> {
@@ -108,7 +108,7 @@ export function buildAndCheckIdWithBody<T, ID>(req: Request, res: Response, keys
   }
   const ok = checkId<T, ID>(obj, id, keys);
   if (!ok) {
-    res.status(400).end('Invalid parameters');
+    res.status(400).end('body and url are not matched');
     return undefined;
   }
   return id;

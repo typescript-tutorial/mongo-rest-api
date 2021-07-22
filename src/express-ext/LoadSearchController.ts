@@ -1,7 +1,7 @@
 import {Request, Response} from 'express';
+import {handleError} from './http';
 import {LoadController, ViewService} from './LoadController';
 import {Attribute, Attributes} from './metadata';
-import {handleError} from './response';
 import {format, fromRequest, getParameters, initializeConfig, jsonResult, Metadata, SearchConfig, SearchModel, SearchResult} from './search';
 import {getMetadataFunc} from './search_func';
 

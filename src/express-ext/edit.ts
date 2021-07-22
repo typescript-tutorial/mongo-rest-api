@@ -1,6 +1,6 @@
 import {Response} from 'express';
+import {handleError} from './http';
 import {Attribute, ErrorMessage} from './metadata';
-import {handleError} from './response';
 
 export interface StatusConfig {
   duplicate_key?: number|string;

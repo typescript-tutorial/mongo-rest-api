@@ -1,8 +1,8 @@
 import {Request, Response} from 'express';
 import {ResultInfo, StatusConfig} from './edit';
 import {GenericController, GenericService} from './GenericController';
+import {handleError} from './http';
 import {ErrorMessage} from './metadata';
-import {handleError} from './response';
 import {format, fromRequest, getParameters, initializeConfig, jsonResult, SearchConfig, SearchModel, SearchResult} from './search';
 import {getMetadataFunc} from './search_func';
 

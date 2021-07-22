@@ -1,6 +1,6 @@
 import {Request, Response} from 'express';
+import {attrs, handleError, respondModel} from './http';
 import {Attribute, Attributes} from './metadata';
-import {handleError} from './response';
 import {buildAndCheckId, buildKeys} from './view';
 
 export interface ViewService<T, ID> {
@@ -18,12 +18,7 @@ function getKeysFunc<T, ID>(viewService: ViewService<T, ID> | ((id: ID, ctx?: an
     if (Array.isArray(keys)) {
       if (keys.length > 0) {
         if (typeof keys[0] === 'string') {
-          const attrs: Attribute[] = [];
-          for (const str of keys) {
-            const attr: Attribute = {name: str as string, type: 'string'};
-            attrs.push(attr);
-          }
-          return attrs;
+          return attrs(keys as string[]);
         } else {
           return keys as Attribute[];
         }
@@ -52,14 +47,9 @@ export class LoadController<T, ID> {
   load(req: Request, res: Response) {
     const id = buildAndCheckId<ID>(req, res, this.keys);
     if (id) {
-      this.view(id).then(obj => respondModel(obj, res)).catch(err => handleError(err, res, this.log));
+      this.view(id)
+        .then(obj => respondModel(obj, res))
+        .catch(err => handleError(err, res, this.log));
     }
-  }
-}
-export function respondModel<T>(obj: T, res: Response): void {
-  if (obj) {
-    res.status(200).json(obj).end();
-  } else {
-    res.status(404).json(null).end();
   }
 }

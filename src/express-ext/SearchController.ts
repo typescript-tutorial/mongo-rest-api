@@ -1,5 +1,5 @@
 import {Request, Response} from 'express';
-import {handleError} from './response';
+import {handleError} from './http';
 import {format, fromRequest, getParameters, initializeConfig, jsonResult, SearchConfig, SearchModel, SearchResult} from './search';
 
 export class SearchController<T, S extends SearchModel> {

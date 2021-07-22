@@ -8,9 +8,9 @@ export class HealthController {
   async check(req: Request, res: Response) {
     check(this.checkers).then(heath => {
       if (heath.status === 'UP') {
-        return res.status(200).json(heath);
+        return res.status(200).json(heath).end();
       } else {
-        return res.status(500).json(heath);
+        return res.status(500).json(heath).end();
       }
     });
   }

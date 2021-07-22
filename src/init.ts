@@ -6,7 +6,6 @@ import { ApplicationContext } from './context';
 import { LocationController, LocationSM } from './controllers/LocationController';
 import { UserController, UserSM } from './controllers/UserController';
 import { User } from './models/User';
-import { Attributes } from './services/mongo/metadata';
 import { PointMapper } from './services/mongo/mongo';
 import { MongoChecker } from './services/mongo/MongoChecker';
 import { locationModel, MongoLocationService } from './services/mongo/MongoLocationService';

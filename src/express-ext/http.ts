@@ -1,5 +1,32 @@
 import {Request, Response} from 'express';
+import {Attribute} from './metadata';
 
+export function handleError(err: any, res: Response, log?: (msg: string, ctx?: any) => void) {
+  if (log) {
+    log(err as any);
+    res.status(500).end('Internal Server Error');
+  } else {
+    res.status(500).end(err);
+  }
+}
+export function attr(name: string): Attribute {
+  return {name, type: 'string'};
+}
+export function attrs(keys: string[]): Attribute[] {
+  const atts: Attribute[] = [];
+  for (const str of keys) {
+    const at: Attribute = {name: str as string, type: 'string'};
+    atts.push(at);
+  }
+  return atts;
+}
+export function respondModel<T>(obj: T, res: Response): void {
+  if (obj) {
+    res.status(200).json(obj).end();
+  } else {
+    res.status(404).json(null).end();
+  }
+}
 export function queryRequiredParams(req: Request, res: Response, name: string, split?: string): string[] {
   const v = req.query[name].toString();
   if (!v || v.length === 0) {
