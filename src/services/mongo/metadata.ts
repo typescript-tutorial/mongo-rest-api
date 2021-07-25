@@ -30,6 +30,7 @@ export interface Attribute {
   default?: string|number|Date;
   key?: boolean;
   unique?: boolean;
+  q?: boolean;
   noinsert?: boolean;
   noupdate?: boolean;
   nopatch?: boolean;

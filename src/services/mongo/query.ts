@@ -85,6 +85,9 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
   const json: any = Object.assign({}, a);
   return json;
 }
+export function isEmpty(s: string): boolean {
+  return !(s && s.length > 0);
+}
 export function buildMatch(v: string, match: string): string|RegExp {
   if (match === 'equal') {
     return v;

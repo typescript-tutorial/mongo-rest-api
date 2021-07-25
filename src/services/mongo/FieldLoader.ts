@@ -1,5 +1,5 @@
 import {Collection, Db} from 'mongodb';
-import {getFields} from './mongo';
+import {valueOf} from './mongo';
 
 export class FieldLoader {
   collection: Collection;
@@ -8,6 +8,6 @@ export class FieldLoader {
     this.values = this.values.bind(this);
   }
   values(ids: string[]): Promise<string[]> {
-    return getFields<string>(this.collection, this.field, ids);
+    return valueOf<string>(this.collection, this.field, ids);
   }
 }

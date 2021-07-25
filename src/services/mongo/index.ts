@@ -9,6 +9,7 @@ export {MongoWriter as MongoGenericService};
 export * from './metadata';
 export * from './MongoChecker';
 export * from './mongo';
+export * from './FieldLoader';
 export * from './MongoLoader';
 export * from './MongoWriter';
 export * from './search';
