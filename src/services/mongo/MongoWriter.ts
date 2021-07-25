@@ -4,7 +4,7 @@ import {deleteById, insert, mapOne, patch, patchWithFilter, revertOne, update, u
 import {MongoLoader} from './MongoLoader';
 
 export class MongoWriter<T, ID> extends MongoLoader<T, ID> {
-  version: string;
+  version?: string;
   constructor(collection: Collection, attributes: Attributes|string, protected toBson?: (v: T) => T, fromBson?: (v: T) => T) {
     super(collection, attributes, fromBson);
     if (typeof attributes !== 'string') {

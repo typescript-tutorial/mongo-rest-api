@@ -4,11 +4,10 @@ import {Attributes, build} from './metadata';
 import {count, findOne, findWithMap, StringMap} from './mongo';
 
 export class MongoLoader<T, ID> {
-  id?: string;
+  protected id?: string;
   protected attributes: Attributes;
   protected idObjectId?: boolean;
   protected map?: StringMap;
-
   constructor(protected collection: Collection, attributes: Attributes|string, protected fromBson?: (v: T) => T) {
     if (typeof attributes === 'string') {
       this.id = attributes;

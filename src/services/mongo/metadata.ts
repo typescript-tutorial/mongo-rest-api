@@ -17,8 +17,10 @@ export interface Model {
   attributes: Attributes;
   source?: string;
   collection?: string;
-  model?: any;
-  schema?: any;
+  sort?: string;
+  geo?: string;
+  latitude?: string;
+  longitude?: string;
 }
 export interface Attribute {
   name?: string;
