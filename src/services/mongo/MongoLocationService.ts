@@ -28,8 +28,8 @@ export const locationModel: Model = {
 export class MongoLocationService extends MongoWriter<Location, string> {
   // private readonly collection: Collection;
   // private readonly id = 'id';
-  constructor(collection: Collection, mapper: PointMapper<Location>) {
-    super(collection, locationModel.attributes, mapper.toPoint, mapper.fromPoint);
+  constructor(db: Db, collectionName: string, mapper: PointMapper<Location>) {
+    super(db, collectionName, locationModel.attributes, mapper.toPoint, mapper.fromPoint);
   }
   /*
   all(): Promise<Location[]> {

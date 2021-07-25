@@ -1,4 +1,4 @@
-import {Collection, FilterQuery, SortOptionObject} from 'mongodb';
+import {Collection, Db, FilterQuery, SortOptionObject} from 'mongodb';
 import {Attributes, build} from './metadata';
 import {StringMap} from './mongo';
 import {buildSearchResult, buildSort as bs, SearchResult} from './search';
@@ -7,11 +7,12 @@ export class SearchBuilder<T, S> {
   attributes?: Attributes;
   id?: string;
   map?: StringMap;
+  collection: Collection;
   buildSort?: (s: string, m?: Attributes|StringMap) => SortOptionObject<T>;
-  constructor(public collection: Collection,
+  constructor(db: Db, collectionName: string,
     public buildQuery: (s: S, m?: Attributes) => FilterQuery<T>,
     metadata: Attributes|string,
-    protected mp?: (v: T) => T,
+    public toBson?: (v: T) => T,
     public sort?: string,
     buildSort?: (s: string, m?: Attributes|StringMap) => SortOptionObject<T>) {
       if (metadata) {
@@ -24,6 +25,7 @@ export class SearchBuilder<T, S> {
           this.map = meta.map;
         }
       }
+      this.collection = db.collection(collectionName);
       this.buildSort = (buildSort ? buildSort : bs);
       this.search = this.search.bind(this);
     }
@@ -33,6 +35,6 @@ export class SearchBuilder<T, S> {
     const so = this.buildSort(sn, this.attributes);
     delete s[st];
     const query = this.buildQuery(s, this.attributes);
-    return buildSearchResult<T>(this.collection, query, so, limit, skip, fields, this.id, this.map, this.mp);
+    return buildSearchResult<T>(this.collection, query, so, limit, skip, fields, this.id, this.map, this.toBson);
   }
 }

@@ -12,6 +12,7 @@ export interface SearchModel {
   excluding?: ArrayMap;
 }
 export interface SearchConfig {
+  fields?: string;
   list?: string;
   total?: string;
   token?: string;
@@ -52,12 +53,16 @@ export function initializeConfig(conf: SearchConfig): SearchConfig {
     return undefined;
   }
   const c = {
+    fields: conf.fields,
     list: conf.list,
     total: conf.total,
     token: conf.token,
     last: conf.last,
     quick: conf.csv
   };
+  if (!c.fields || c.fields.length === 0) {
+    c.fields = 'fields';
+  }
   if (!c.list || c.list.length === 0) {
     c.list = 'list';
   }
@@ -72,16 +77,19 @@ export function initializeConfig(conf: SearchConfig): SearchConfig {
   }
   return c;
 }
-export function fromRequest<S>(req: Request): S {
-  const s: any = (req.method === 'GET' ? fromUrl(req) : req.body);
+export function fromRequest<S>(req: Request, fields?: string): S {
+  const s: any = (req.method === 'GET' ? fromUrl(req, fields) : req.body);
   return s;
 }
-export function fromUrl<S>(req: Request): S {
+export function fromUrl<S>(req: Request, fields?: string): S {
+  if (!fields || fields.length === 0) {
+    fields = 'fields';
+  }
   const s: any = {};
     const obj = req.query;
     const keys = Object.keys(obj);
     for (const key of keys) {
-      if (key === 'fields') {
+      if (key === fields) {
         const x = (obj[key] as string).split(',');
         s[key] = x;
       } else {

@@ -1,5 +1,5 @@
 import {ObjectId} from 'bson';
-import {Collection} from 'mongodb';
+import {Collection, Db} from 'mongodb';
 import {Attributes, build} from './metadata';
 import {count, findOne, findWithMap, StringMap} from './mongo';
 
@@ -8,7 +8,8 @@ export class MongoLoader<T, ID> {
   protected attributes: Attributes;
   protected idObjectId?: boolean;
   protected map?: StringMap;
-  constructor(protected collection: Collection, attributes: Attributes|string, protected fromBson?: (v: T) => T) {
+  protected collection: Collection;
+  constructor(db: Db, collectionName: string, attributes: Attributes|string, protected fromBson?: (v: T) => T) {
     if (typeof attributes === 'string') {
       this.id = attributes;
     } else {
@@ -18,6 +19,7 @@ export class MongoLoader<T, ID> {
       this.idObjectId = meta.objectId;
       this.map = meta.map;
     }
+    this.collection = db.collection(collectionName);
     this.metadata = this.metadata.bind(this);
     this.all = this.all.bind(this);
     this.load = this.load.bind(this);

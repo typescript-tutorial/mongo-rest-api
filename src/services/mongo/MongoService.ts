@@ -8,7 +8,7 @@ import {buildSearchResult, buildSort, SearchResult} from './search';
 export class MongoService<T, ID, S> extends MongoWriter<T, ID> {
   public sort: string;
   constructor(public db: Db, public model: Model) {
-    super(db.collection(getCollectionName(model)), model.attributes);
+    super(db, getCollectionName(model), model.attributes);
     this.sort = (model.sort && model.sort.length > 0 ? model.sort : 'sort');
     if (model.geo && model.latitude && model.longitude && model.geo.length > 0 && model.latitude.length > 0 && model.longitude.length > 0) {
       const mapper = new PointMapper<T>(model.geo, model.latitude, model.longitude);

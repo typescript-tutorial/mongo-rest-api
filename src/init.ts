@@ -19,13 +19,13 @@ export function log(msg: any): void {
 resources.createValidator = createValidator;
 export function createContext(db: Db): ApplicationContext {
   const mapper = new PointMapper('location');
-  const locationService = new MongoLocationService(db.collection('location'), mapper);
-  const searchLocation = new SearchBuilder<Location, LocationSM>(db.collection('location'), buildQuery as any, locationModel.attributes, mapper.fromPoint);
+  const locationService = new MongoLocationService(db, 'location', mapper);
+  const searchLocation = new SearchBuilder<Location, LocationSM>(db, 'location', buildQuery as any, locationModel.attributes, mapper.fromPoint);
   const s = searchLocation.search;
   const locationController = new LocationController(null, s, locationService);
   // const queryUser: (s: UserSM, m?: Attributes) => FilterQuery<User> = buildQuery as any;
-  const searchUser = new SearchBuilder<User, UserSM>(db.collection('users'), buildQuery as any, userModel.attributes);
-  const userService = new MongoUserService(db.collection('users'));
+  const searchUser = new SearchBuilder<User, UserSM>(db, 'users', buildQuery as any, userModel.attributes);
+  const userService = new MongoUserService(db, 'users');
   const userController = new UserController(log, searchUser.search, userService);
   const mongoChecker = new MongoChecker(db);
   const healthController = new HealthController([mongoChecker]);

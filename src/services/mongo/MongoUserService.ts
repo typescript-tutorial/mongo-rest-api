@@ -35,8 +35,8 @@ export const userModel: Model = {
 export class MongoUserService extends MongoWriter<User, string> {
   // private readonly collection: Collection;
   private readonly id2 = 'id';
-  constructor(collection: Collection) {
-    super(collection, userModel.attributes);
+  constructor(db: Db, collectionName: string) {
+    super(db, collectionName, userModel.attributes);
     // this.collection = db.collection('users');
     // this.load = this.load.bind(this);
     this.insert = this.insert.bind(this);
