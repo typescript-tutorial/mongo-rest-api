@@ -1,15 +1,19 @@
-import {Db} from 'mongodb';
-import {getCollectionName, Model} from './metadata';
-import {PointMapper} from './mongo';
+import {Db, FilterQuery, SortOptionObject} from 'mongodb';
+import {Attributes, getCollectionName, Model} from './metadata';
+import {PointMapper, StringMap} from './mongo';
 import {MongoWriter} from './MongoWriter';
 import {buildQuery} from './query';
 import {buildSearchResult, buildSort, SearchResult} from './search';
 
 export class MongoService<T, ID, S> extends MongoWriter<T, ID> {
-  public sort: string;
-  constructor(public db: Db, public model: Model) {
+  sort: string;
+  buildQuery: (s: S, m?: Attributes) => FilterQuery<T>;
+  buildSort: (s: string, m?: Attributes|StringMap) => SortOptionObject<T>;
+  constructor(public db: Db, public model: Model, buildQ: (s: S, m?: Attributes) => FilterQuery<T>, buildOrder?: (s: string, m?: Attributes|StringMap) => SortOptionObject<T>) {
     super(db, getCollectionName(model), model.attributes);
     this.sort = (model.sort && model.sort.length > 0 ? model.sort : 'sort');
+    this.buildQuery = (buildQ ? buildQ : buildQuery);
+    this.buildSort = (buildOrder ? buildOrder : buildSort);
     if (model.geo && model.latitude && model.longitude && model.geo.length > 0 && model.latitude.length > 0 && model.longitude.length > 0) {
       const mapper = new PointMapper<T>(model.geo, model.latitude, model.longitude);
       this.fromBson = mapper.fromPoint;
@@ -20,9 +24,9 @@ export class MongoService<T, ID, S> extends MongoWriter<T, ID> {
   search(s: S, limit?: number, skip?: number, fields?: string[]): Promise<SearchResult<T>> {
     const st = (this.sort ? this.sort : 'sort');
     const sn = s[st] as string;
-    const so = buildSort(sn, this.attributes);
+    const so = this.buildSort(sn, this.attributes);
     delete s[st];
-    const query = buildQuery(s, this.attributes);
+    const query = this.buildQuery(s, this.attributes);
     return buildSearchResult<T>(this.collection, query, so, limit, skip, fields, this.id, this.map, this.fromBson);
   }
 }
