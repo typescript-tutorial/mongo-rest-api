@@ -3,7 +3,7 @@
 ## How to run
 #### Clone the repository
 ```shell
-git clone https://github.com/typescript-tutorials/mongo-rest-api.git
+git clone https://github.com/typescript-tutorial/mongo-rest-api.git
 cd mongo-rest-api
 ```
 

@@ -19,7 +19,7 @@ export class UserController {
   load(req: Request, res: Response) {
     const id = req.params['id'];
     if (!id || id.length === 0) {
-      return res.status(400).send('Id cannot be empty');
+      return res.status(400).send('id cannot be empty');
     }
     this.userService.load(id)
       .then(user => {
@@ -40,13 +40,13 @@ export class UserController {
   update(req: Request, res: Response) {
     const id = req.params['id'];
     if (!id || id.length === 0) {
-      return res.status(400).send('Id cannot be empty');
+      return res.status(400).send('id cannot be empty');
     }
     const user = req.body;
     if (!user.id) {
       user.id = id;
     } else if (id !== user.id) {
-      return res.status(400).send('Id not match');
+      return res.status(400).send('body and url are not matched');
     }
     this.userService.update(user)
       .then(result => res.status(200).json(result))
@@ -55,13 +55,13 @@ export class UserController {
   patch(req: Request, res: Response) {
     const id = req.params['id'];
     if (!id || id.length === 0) {
-      return res.status(400).send('Id cannot be empty');
+      return res.status(400).send('id cannot be empty');
     }
     const user = req.body;
     if (!user.id) {
       user.id = id;
     } else if (id !== user.id) {
-      return res.status(400).send('Id not match');
+      return res.status(400).send('body and url are not matched');
     }
     this.userService.patch(user)
       .then(result => res.status(200).json(result))
@@ -70,7 +70,7 @@ export class UserController {
   delete(req: Request, res: Response) {
     const id = req.params['id'];
     if (!id || id.length === 0) {
-      return res.status(400).send('Id cannot be empty');
+      return res.status(400).send('id cannot be empty');
     }
     this.userService.delete(id)
       .then(result => res.status(200).json(result))
