@@ -19,6 +19,11 @@ export interface SearchConfig {
   token?: string;
   last?: string;
   csv?: boolean;
+  page?: string;
+  limit?: string;
+  skip?: string;
+  refId?: string;
+  firstLimit?: string;
 }
 export interface SearchResult<T> {
   list: T[];
@@ -53,14 +58,19 @@ export function initializeConfig(conf: SearchConfig): SearchConfig {
   if (!conf) {
     return undefined;
   }
-  const c = {
+  const c: SearchConfig = {
     excluding: conf.excluding,
     fields: conf.fields,
     list: conf.list,
     total: conf.total,
     token: conf.token,
     last: conf.last,
-    quick: conf.csv
+    csv: conf.csv,
+    page: conf.page,
+    limit: conf.limit,
+    skip: conf.skip,
+    refId: conf.refId,
+    firstLimit: conf.firstLimit
   };
   if (!c.excluding || c.excluding.length === 0) {
     c.excluding = 'excluding';
@@ -72,13 +82,28 @@ export function initializeConfig(conf: SearchConfig): SearchConfig {
     c.list = 'list';
   }
   if (!c.total || c.total.length === 0) {
-    c.list = 'total';
+    c.total = 'total';
   }
   if (!c.last || c.last.length === 0) {
     c.last = 'last';
   }
   if (!c.token || c.token.length === 0) {
     c.token = 'nextPageToken';
+  }
+  if (!c.page || c.page.length === 0) {
+    c.page = 'page';
+  }
+  if (!c.limit || c.limit.length === 0) {
+    c.limit = 'limit';
+  }
+  if (!c.skip || c.skip.length === 0) {
+    c.skip = 'skip';
+  }
+  if (!c.refId || c.refId.length === 0) {
+    c.refId = 'refId';
+  }
+  if (!c.firstLimit || c.firstLimit.length === 0) {
+    c.firstLimit = 'firstLimit';
   }
   return c;
 }
@@ -151,98 +176,190 @@ export interface Limit {
   fields?: string[];
   skipOrRefId?: string|number;
 }
-export function getParameters<T>(obj: T, sfield?: string): Limit {
-  if (!sfield || sfield.length === 0) {
-    sfield = 'fields';
-  }
-  let fields;
-  const fs = obj[sfield];
-  if (fs && Array.isArray(fs)) {
-    fields = fs;
-    delete obj[sfield];
-  }
-  let refId = obj['refId'];
-  if (!refId) {
-    refId = obj['nextPageToken'];
-  }
-  const r: Limit = {fields, refId};
-  let pageSize = obj['limit'];
-  if (!pageSize) {
-    pageSize = obj['pageSize'];
-  }
-  if (pageSize && !isNaN(pageSize)) {
-    const ipageSize = Math.floor(parseFloat(pageSize));
-    if (ipageSize > 0) {
-      r.limit = ipageSize;
-      const skip = obj['skip'];
-      if (skip && !isNaN(skip)) {
-        const iskip = Math.floor(parseFloat(skip));
-        if (iskip >= 0) {
-          r.skip = iskip;
-          r.skipOrRefId = r.skip;
-          deletePageInfo(obj);
-          return r;
-        }
-      }
-      let pageIndex = obj['page'];
-      if (!pageIndex) {
-        pageIndex = obj['pageIndex'];
-        if (!pageIndex) {
-          pageIndex = obj['pageNo'];
-        }
-      }
-      if (pageIndex && !isNaN(pageIndex)) {
-        let ipageIndex = Math.floor(parseFloat(pageIndex));
-        if (ipageIndex < 1) {
-          ipageIndex = 1;
-        }
-        let firstPageSize = obj['firstLimit'];
-        if (!firstPageSize) {
-          firstPageSize = obj['firstPageSize'];
-        }
-        if (!firstPageSize) {
-          firstPageSize = obj['initPageSize'];
-        }
-        if (firstPageSize && !isNaN(firstPageSize)) {
-          const ifirstPageSize = Math.floor(parseFloat(firstPageSize));
-          if (ifirstPageSize > 0) {
-            r.skip = ipageSize * (ipageIndex - 2) + ifirstPageSize;
+export function getParameters<T>(obj: T, config?: SearchConfig): Limit {
+  if (!config) {
+    const sfield = 'fields';
+    let fields;
+    const fs = obj[sfield];
+    if (fs && Array.isArray(fs)) {
+      fields = fs;
+      delete obj[sfield];
+    }
+    let refId = obj['refId'];
+    if (!refId) {
+      refId = obj['nextPageToken'];
+    }
+    const r: Limit = {fields, refId};
+    let pageSize = obj['limit'];
+    if (!pageSize) {
+      pageSize = obj['pageSize'];
+    }
+    if (pageSize && !isNaN(pageSize)) {
+      const ipageSize = Math.floor(parseFloat(pageSize));
+      if (ipageSize > 0) {
+        r.limit = ipageSize;
+        const skip = obj['skip'];
+        if (skip && !isNaN(skip)) {
+          const iskip = Math.floor(parseFloat(skip));
+          if (iskip >= 0) {
+            r.skip = iskip;
             r.skipOrRefId = r.skip;
             deletePageInfo(obj);
             return r;
           }
         }
-        r.skip = ipageSize * (ipageIndex - 1);
-        r.skipOrRefId = r.skip;
+        let pageIndex = obj['page'];
+        if (!pageIndex) {
+          pageIndex = obj['pageIndex'];
+          if (!pageIndex) {
+            pageIndex = obj['pageNo'];
+          }
+        }
+        if (pageIndex && !isNaN(pageIndex)) {
+          let ipageIndex = Math.floor(parseFloat(pageIndex));
+          if (ipageIndex < 1) {
+            ipageIndex = 1;
+          }
+          let firstPageSize = obj['firstLimit'];
+          if (!firstPageSize) {
+            firstPageSize = obj['firstPageSize'];
+          }
+          if (!firstPageSize) {
+            firstPageSize = obj['initPageSize'];
+          }
+          if (firstPageSize && !isNaN(firstPageSize)) {
+            const ifirstPageSize = Math.floor(parseFloat(firstPageSize));
+            if (ifirstPageSize > 0) {
+              r.skip = ipageSize * (ipageIndex - 2) + ifirstPageSize;
+              r.skipOrRefId = r.skip;
+              deletePageInfo(obj);
+              return r;
+            }
+          }
+          r.skip = ipageSize * (ipageIndex - 1);
+          r.skipOrRefId = r.skip;
+          deletePageInfo(obj);
+          return r;
+        }
+        r.skip = 0;
+        if (r.refId && r.refId.length > 0) {
+          r.skipOrRefId = r.refId;
+        }
         deletePageInfo(obj);
         return r;
       }
-      r.skip = 0;
-      if (r.refId && r.refId.length > 0) {
-        r.skipOrRefId = r.refId;
+    }
+    if (r.refId && r.refId.length > 0) {
+      r.skipOrRefId = r.refId;
+    }
+    deletePageInfo(obj);
+    return r;
+  } else {
+    let sfield = config.fields;
+    if (!sfield || sfield.length === 0) {
+      sfield = 'fields';
+    }
+    let fields;
+    const fs = obj[sfield];
+    if (fs && Array.isArray(fs)) {
+      fields = fs;
+      delete obj[sfield];
+    }
+    let strRefId = config.refId;
+    if (!strRefId || strRefId.length === 0) {
+      strRefId = 'refId';
+    }
+    const refId = obj[strRefId];
+    const r: Limit = {fields, refId};
+
+    let strLimit = config.limit;
+    if (!strLimit || strLimit.length === 0) {
+      strLimit = 'limit';
+    }
+    const pageSize = obj[strLimit];
+    const arr = [config.page, config.limit, config.skip, config.refId, config.firstLimit];
+    if (pageSize && !isNaN(pageSize)) {
+      const ipageSize = Math.floor(parseFloat(pageSize));
+      if (ipageSize > 0) {
+        r.limit = ipageSize;
+        let strSkip = config.skip;
+        if (!strSkip || strSkip.length === 0) {
+          strSkip = 'skip';
+        }
+        const skip = obj[strSkip];
+        if (skip && !isNaN(skip)) {
+          const iskip = Math.floor(parseFloat(skip));
+          if (iskip >= 0) {
+            r.skip = iskip;
+            r.skipOrRefId = r.skip;
+            deletePageInfo(obj, arr);
+            return r;
+          }
+        }
+        let strPage = config.page;
+        if (!strPage || strPage.length === 0) {
+          strPage = 'page';
+        }
+        const pageIndex = obj[strPage];
+        if (pageIndex && !isNaN(pageIndex)) {
+          let ipageIndex = Math.floor(parseFloat(pageIndex));
+          if (ipageIndex < 1) {
+            ipageIndex = 1;
+          }
+          let strFirstLimit = config.firstLimit;
+          if (!strFirstLimit || strFirstLimit.length === 0) {
+            strFirstLimit = 'firstLimit';
+          }
+          const firstPageSize = obj[strFirstLimit];
+          if (firstPageSize && !isNaN(firstPageSize)) {
+            const ifirstPageSize = Math.floor(parseFloat(firstPageSize));
+            if (ifirstPageSize > 0) {
+              r.skip = ipageSize * (ipageIndex - 2) + ifirstPageSize;
+              r.skipOrRefId = r.skip;
+              deletePageInfo(obj, arr);
+              return r;
+            }
+          }
+          r.skip = ipageSize * (ipageIndex - 1);
+          r.skipOrRefId = r.skip;
+          deletePageInfo(obj, arr);
+          return r;
+        }
+        r.skip = 0;
+        if (r.refId && r.refId.length > 0) {
+          r.skipOrRefId = r.refId;
+        }
+        deletePageInfo(obj, arr);
+        return r;
       }
-      deletePageInfo(obj);
-      return r;
+    }
+    if (r.refId && r.refId.length > 0) {
+      r.skipOrRefId = r.refId;
+    }
+    deletePageInfo(obj, arr);
+    return r;
+  }
+}
+export function deletePageInfo(obj: any, arr?: string[]): void {
+  if (!arr || arr.length === 0) {
+    delete obj['limit'];
+    delete obj['firstLimit'];
+    delete obj['skip'];
+    delete obj['page'];
+    delete obj['pageNo'];
+    delete obj['pageIndex'];
+    delete obj['pageSize'];
+    delete obj['initPageSize'];
+    delete obj['firstPageSize'];
+    delete obj['refId'];
+    delete obj['nextPageToken'];
+  } else {
+    for (const o of arr) {
+      if (o && o.length > 0) {
+        delete obj[o];
+      }
     }
   }
-  if (r.refId && r.refId.length > 0) {
-    r.skipOrRefId = r.refId;
-  }
-  deletePageInfo(obj);
-  return r;
-}
-export function deletePageInfo(obj: any): void {
-  delete obj['limit'];
-  delete obj['firstLimit'];
-  delete obj['skip'];
-  delete obj['page'];
-  delete obj['pageNo'];
-  delete obj['pageIndex'];
-  delete obj['pageSize'];
-  delete obj['initPageSize'];
-  delete obj['firstPageSize'];
-  delete obj['refId'];
-  delete obj['nextPageToken'];
 }
 const re = /"/g;
 export function toCsv<T>(fields: string[], r: SearchResult<T>): string {

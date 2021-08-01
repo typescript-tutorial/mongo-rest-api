@@ -9,7 +9,7 @@ export interface LocationSM extends SearchModel {
 }
 export class LocationController extends GenericSearchHandler<Location, string, LocationSM> {
   constructor(log: (msg: string, ctx?: any) => void, find: (s: LocationSM, limit?: number, skip?: number|string, fields?: string[]) => Promise<SearchResult<Location>>, private locationService: LocationService) {
-    super(log, find, locationService);
+    super(log, find, locationService, {} as any);
     // this.search = this.search.bind(this);
     this.all = this.all.bind(this);
     // this.load = this.load.bind(this);

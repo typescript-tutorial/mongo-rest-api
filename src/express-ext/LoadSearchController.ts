@@ -36,7 +36,7 @@ export class LoadSearchController<T, ID, S extends SearchModel> extends LoadCont
   }
   search(req: Request, res: Response) {
     const s = fromRequest<S>(req, this.fields, this.excluding);
-    const l = getParameters(s, this.fields);
+    const l = getParameters(s, this.config);
     const s2 = format(s, this.dates, this.numbers);
     this.find(s2, l.limit, l.skipOrRefId, l.fields)
       .then(result => jsonResult(res, result, this.csv, l.fields, this.config))
