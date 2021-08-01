@@ -20,3 +20,4 @@ export * from './SearchBuilder';
 export * from './one';
 export * from './batch';
 export * from './MongoService';
+export * from './AuditLogWriter';

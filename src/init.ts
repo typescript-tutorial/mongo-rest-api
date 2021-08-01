@@ -6,6 +6,7 @@ import { ApplicationContext } from './context';
 import { LocationController, LocationSM } from './controllers/LocationController';
 import { UserController, UserSM } from './controllers/UserController';
 import { User } from './models/User';
+import { AuditLogWriter } from './services/mongo';
 import { PointMapper } from './services/mongo/mongo';
 import { MongoChecker } from './services/mongo/MongoChecker';
 import { locationModel, MongoLocationService } from './services/mongo/MongoLocationService';
@@ -18,6 +19,8 @@ export function log(msg: any): void {
 }
 resources.createValidator = createValidator;
 export function createContext(db: Db): ApplicationContext {
+  const logWriter = new AuditLogWriter(db, 'auditLog');
+  logWriter.write('duc', '11', 'login', 'test', true).then(r => console.log('ok'));
   const mapper = new PointMapper('location');
   const locationService = new MongoLocationService(db, 'location', mapper);
   const searchLocation = new SearchBuilder<Location, LocationSM>(db, 'location', buildQuery as any, locationModel.attributes, mapper.fromPoint, null, 'qu', 'ex2');
