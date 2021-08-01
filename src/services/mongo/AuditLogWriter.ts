@@ -47,6 +47,6 @@ export class AuditLogWriter {
     if (remark && remark.length > 0) {
       log[c.remark] = remark;
     }
-    return this.collection.insert(log).then(r => r.insertedCount);
+    return this.collection.insertOne(log).then(r => r.insertedCount);
   }
 }

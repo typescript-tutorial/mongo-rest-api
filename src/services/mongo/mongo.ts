@@ -341,7 +341,7 @@ export function upsert<T>(collection: Collection, object: T, id?: string, toBson
       });
     }));
   } else {
-    return collection.insert(object).then(r => {
+    return collection.insertOne(object).then(r => {
       const v = r['insertedId'];
       if (v && id && id.length > 0) {
         object[id] = v;
