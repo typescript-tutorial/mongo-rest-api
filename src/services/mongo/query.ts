@@ -1,9 +1,29 @@
 import {FilterQuery} from 'mongodb';
 import {Attribute, Attributes} from './metadata';
 
-export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
+export function buildQuery<T, S>(s: S, attrs?: Attributes, sq?: string, strExcluding?: string): FilterQuery<T> {
   const a: any = {};
   const b: any = {};
+  let q: string;
+  let excluding: string[]|number[];
+  if (sq && sq.length > 0) {
+    q = s[sq];
+    delete s[sq];
+    if (q === '') {
+      q = undefined;
+    }
+  }
+  if (strExcluding && strExcluding.length > 0) {
+    excluding = s[strExcluding];
+    delete s[strExcluding];
+    if (typeof excluding === 'string') {
+      excluding = (excluding as string).split(',');
+    }
+    if (excluding && excluding.length === 0) {
+      excluding = undefined;
+    }
+  }
+  const ex: string[] = [];
   const keys = Object.keys(s);
   for (const key of keys) {
     const v = s[key];
@@ -17,6 +37,9 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
             field = '_id';
           }
           if (typeof v === 'string') {
+            if (attr.q) {
+              ex.push(key);
+            }
             const exg = buildMatch(v, attr.match);
             a[field] = exg;
           } else if (v instanceof Date) {
@@ -82,11 +105,42 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes): FilterQuery<T> {
       }
     }
   }
-  const json: any = Object.assign({}, a);
-  return json;
+  if (excluding) {
+    a._id = {$nin: excluding};
+  }
+  const c = [];
+  if (q && attrs) {
+    const qkeys = Object.keys(attrs);
+    for (const field of qkeys) {
+      const attr = attrs[field];
+      if (attr.q && (attr.type === undefined || attr.type === 'string') && !ex.includes(field)) {
+        c.push(buildQ(field, attr.match, q));
+      }
+    }
+  }
+  if (c.length === 1) {
+    const json: any = Object.assign(a, c[0]);
+    return json;
+  } else if (c.length > 1) {
+    a.$or = c;
+    return a;
+  } else {
+    return a;
+  }
 }
 export function isEmpty(s: string): boolean {
   return !(s && s.length > 0);
+}
+export function buildQ(field: string, match: string, q: string): any {
+  const o = {};
+  if (match === 'equal') {
+    o[field] = q;
+  } else if (match === 'prefix') {
+    o[field] = new RegExp(`^${q}`);
+  } else {
+    o[field] = new RegExp(`\\w*${q}\\w*`);
+  }
+  return o;
 }
 export function buildMatch(v: string, match: string): string|RegExp {
   if (match === 'equal') {

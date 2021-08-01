@@ -606,6 +606,20 @@ export function buildProject<T>(fields: string[], all?: string[], mp?: StringMap
   }
   return p;
 }
+export function getMapField(name: string, mp?: StringMap): string {
+  if (!mp) {
+    return name;
+  }
+  const x = mp[name];
+  if (!x) {
+    return name;
+  }
+  if (typeof x === 'string') {
+    return x;
+  }
+  return name;
+}
+
 export function fromPoints<T>(s: T[], geo?: string, latitude?: string, longitude?: string): T[] {
   if (!geo) {
     geo = 'geo';

@@ -13,10 +13,16 @@ export const locationModel: Model = {
     },
     locationName: {
       required: true,
+      match: 'equal',
+      q: true
     },
     type: {
       match: 'equal',
       required: true
+    },
+    description: {
+      match: 'equal',
+      q: true
     },
     version: {
       type: 'integer',

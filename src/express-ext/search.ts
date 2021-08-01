@@ -12,6 +12,7 @@ export interface SearchModel {
   excluding?: ArrayMap;
 }
 export interface SearchConfig {
+  excluding?: string;
   fields?: string;
   list?: string;
   total?: string;
@@ -53,6 +54,7 @@ export function initializeConfig(conf: SearchConfig): SearchConfig {
     return undefined;
   }
   const c = {
+    excluding: conf.excluding,
     fields: conf.fields,
     list: conf.list,
     total: conf.total,
@@ -60,6 +62,9 @@ export function initializeConfig(conf: SearchConfig): SearchConfig {
     last: conf.last,
     quick: conf.csv
   };
+  if (!c.excluding || c.excluding.length === 0) {
+    c.excluding = 'excluding';
+  }
   if (!c.fields || c.fields.length === 0) {
     c.fields = 'fields';
   }
@@ -77,11 +82,11 @@ export function initializeConfig(conf: SearchConfig): SearchConfig {
   }
   return c;
 }
-export function fromRequest<S>(req: Request, fields?: string): S {
-  const s: any = (req.method === 'GET' ? fromUrl(req, fields) : req.body);
+export function fromRequest<S>(req: Request, fields?: string, excluding?: string): S {
+  const s: any = (req.method === 'GET' ? fromUrl(req, fields, excluding) : req.body);
   return s;
 }
-export function fromUrl<S>(req: Request, fields?: string): S {
+export function fromUrl<S>(req: Request, fields?: string, excluding?: string): S {
   if (!fields || fields.length === 0) {
     fields = 'fields';
   }
@@ -92,27 +97,51 @@ export function fromUrl<S>(req: Request, fields?: string): S {
       if (key === fields) {
         const x = (obj[key] as string).split(',');
         s[key] = x;
+      } else if (key === excluding) {
+        const x = (obj[key] as string).split(',');
+        s[key] = x;
       } else {
         setValue(s, key, obj[key] as string);
       }
     }
     return s;
 }
-export function setValue<T>(obj: T, key: string, v: string): void {
-  const vs = key.split('.');
-  if (vs.length === 1) {
-    obj[key] = v;
+/*
+export function setValue<T>(obj: T, path: string, value: string): void {
+  const paths = path.split('.');
+  if (paths.length === 1) {
+    obj[path] = value;
   } else {
     let current: any = obj;
-    const l = vs.length - 1;
+    const l = paths.length - 1;
     for (let i = 0; i < l; i++) {
-      const sub = vs[i];
+      const sub = paths[i];
       if (!obj[sub]) {
         obj[sub] = {};
       }
       current = obj[sub];
     }
-    current[vs[vs.length - 1]] = v;
+    current[paths[paths.length - 1]] = value;
+  }
+}
+*/
+export function setValue<T, V>(obj: T, path: string, value: V): void {
+  const paths = path.split('.');
+  if (paths.length === 1) {
+    obj[path] = value;
+  } else {
+    let o = obj;
+    const l = paths.length - 1;
+    for (let i = 0; i < l - 1; i++) {
+      const p = paths[i];
+      if (p in o) {
+        o = o[p];
+      } else {
+        o[p] = {};
+        o = o[p];
+      }
+    }
+    o[paths[paths.length - 1]] = value;
   }
 }
 export interface Limit {
@@ -122,11 +151,15 @@ export interface Limit {
   fields?: string[];
   skipOrRefId?: string|number;
 }
-export function getParameters<T>(obj: T): Limit {
+export function getParameters<T>(obj: T, sfield?: string): Limit {
+  if (!sfield || sfield.length === 0) {
+    sfield = 'fields';
+  }
   let fields;
-  const fs = obj['fields'];
+  const fs = obj[sfield];
   if (fs && Array.isArray(fs)) {
     fields = fs;
+    delete obj[sfield];
   }
   let refId = obj['refId'];
   if (!refId) {
@@ -210,7 +243,6 @@ export function deletePageInfo(obj: any): void {
   delete obj['firstPageSize'];
   delete obj['refId'];
   delete obj['nextPageToken'];
-  delete obj['fields'];
 }
 const re = /"/g;
 export function toCsv<T>(fields: string[], r: SearchResult<T>): string {

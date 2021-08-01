@@ -9,12 +9,14 @@ export class MongoService<T, ID, S> extends MongoWriter<T, ID> {
   sort: string;
   buildQuery: (s: S, m?: Attributes) => FilterQuery<T>;
   buildSort: (s: string, m?: Attributes|StringMap) => SortOptionObject<T>;
-  constructor(public db: Db, public model: Model, buildQ: (s: S, m?: Attributes) => FilterQuery<T>, buildOrder?: (s: string, m?: Attributes|StringMap) => SortOptionObject<T>) {
+  constructor(public db: Db, public model: Model, buildQ?: (s: S, m?: Attributes) => FilterQuery<T>, buildOrder?: (s: string, m?: Attributes|StringMap) => SortOptionObject<T>, fromBson?: (v: T) => T, toBson?: (v: T) => T) {
     super(db, getCollectionName(model), model.attributes);
     this.sort = (model.sort && model.sort.length > 0 ? model.sort : 'sort');
     this.buildQuery = (buildQ ? buildQ : buildQuery);
     this.buildSort = (buildOrder ? buildOrder : buildSort);
-    if (model.geo && model.latitude && model.longitude && model.geo.length > 0 && model.latitude.length > 0 && model.longitude.length > 0) {
+    this.fromBson = fromBson;
+    this.toBson = toBson;
+    if (!fromBson && !toBson && model.geo && model.latitude && model.longitude && model.geo.length > 0 && model.latitude.length > 0 && model.longitude.length > 0) {
       const mapper = new PointMapper<T>(model.geo, model.latitude, model.longitude);
       this.fromBson = mapper.fromPoint;
       this.toBson = mapper.toPoint;
