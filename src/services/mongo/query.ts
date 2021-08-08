@@ -28,7 +28,7 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes, sq?: string, strExclu
   for (const key of keys) {
     const v = s[key];
     let field = key;
-    if (v) {
+    if (v !== undefined && v != null) {
       if (attrs) {
         const attr: Attribute = attrs[key];
         if (attr) {
