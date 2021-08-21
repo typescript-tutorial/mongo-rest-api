@@ -59,7 +59,9 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes, sq?: string, strExclu
           } else if (attr.type === 'ObjectId') {
             a[field] = v;
           } else if (typeof v === 'object') {
-            if (attr.type === 'date' || attr.type === 'datetime') {
+            if (Array.isArray(v)) {
+              a[field] = {$in: v};
+            } else if (attr.type === 'date' || attr.type === 'datetime') {
               if (isDateRange(v)) {
                 if (v['max']) {
                   b['$lte'] = v['max'];
@@ -118,6 +120,7 @@ export function buildQuery<T, S>(s: S, attrs?: Attributes, sq?: string, strExclu
       }
     }
   }
+  console.log(JSON.stringify(a));
   if (c.length === 1) {
     const json: any = Object.assign(a, c[0]);
     return json;
