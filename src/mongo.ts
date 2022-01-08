@@ -1,4 +1,4 @@
-import {Collection, Db, DeleteWriteOpResultObject, FilterQuery, FindAndModifyWriteOpResultObject, MongoClient, MongoClientOptions, ProjectionOperators, SchemaMember, SortOptionObject} from 'mongodb';
+import { Collection, Db, DeleteWriteOpResultObject, FilterQuery, FindAndModifyWriteOpResultObject, MongoClient, MongoClientOptions, ProjectionOperators, SchemaMember, SortOptionObject } from 'mongodb';
 
 export interface MongoConfig {
   uri: string;
@@ -106,9 +106,9 @@ export function patch<T>(collection: Collection, obj: T, id?: string, toBson?: (
     }
     collection.findOneAndUpdate({ _id: (obj as any)['_id'] }, { $set: obj }, (err, result: FindAndModifyWriteOpResultObject<T>) => {
       mapOne(obj, id);
-        if (toBson && fromBson) {
-          fromBson(obj);
-        }
+      if (toBson && fromBson) {
+        fromBson(obj);
+      }
       if (err) {
         reject(err);
       } else {
@@ -135,9 +135,9 @@ export function update<T>(collection: Collection, obj: T, id?: string, toBson?: 
     }
     collection.findOneAndReplace({ _id: (obj as any)['_id'] }, (obj as any), (err, result: FindAndModifyWriteOpResultObject<T>) => {
       mapOne(obj, id);
-        if (toBson && fromBson) {
-          fromBson(obj);
-        }
+      if (toBson && fromBson) {
+        fromBson(obj);
+      }
       if (err) {
         reject(err);
       } else {

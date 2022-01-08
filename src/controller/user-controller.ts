@@ -1,5 +1,5 @@
-import {Request, Response} from 'express';
-import {UserService} from '../services/UserService';
+import { Request, Response } from 'express';
+import { UserService } from '../metadata/user';
 
 export class UserController {
   constructor(private userService: UserService) {
@@ -10,7 +10,6 @@ export class UserController {
     this.patch = this.patch.bind(this);
     this.delete = this.delete.bind(this);
   }
-
   all(req: Request, res: Response) {
     this.userService.all()
       .then(users => res.status(200).json(users))

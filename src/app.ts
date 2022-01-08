@@ -1,10 +1,9 @@
-import {json} from 'body-parser';
 import dotenv from 'dotenv';
-import express from 'express';
+import express, { json } from 'express';
 import http from 'http';
-import {createContext} from './init';
-import {route} from './route';
-import {connectToDb} from './services/mongo/mongo';
+import { createContext } from './context';
+import { connectToDb } from './mongo';
+import { route } from './route';
 
 dotenv.config();
 

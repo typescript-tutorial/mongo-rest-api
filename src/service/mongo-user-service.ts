@@ -1,6 +1,6 @@
-import {Collection, Db, FilterQuery} from 'mongodb';
-import {User} from '../../models/User';
-import {deleteById, findOne, findWithMap, insert, patch, update} from './mongo';
+import { Collection, Db, FilterQuery } from 'mongodb';
+import { User } from '../metadata/user';
+import { deleteById, findOne, findWithMap, insert, patch, update } from '../mongo';
 
 export class MongoUserService {
   private readonly collection: Collection;
@@ -8,12 +8,11 @@ export class MongoUserService {
   constructor(db: Db) {
     this.collection = db.collection('users');
   }
-
   all(): Promise<User[]> {
     return findWithMap<User>(this.collection, {}, this.id);
   }
   load(id: string): Promise<User> {
-    const query: FilterQuery<any> = { _id:  id};
+    const query: FilterQuery<any> = { _id: id };
     return findOne<User>(this.collection, query, this.id);
   }
   insert(user: User): Promise<number> {

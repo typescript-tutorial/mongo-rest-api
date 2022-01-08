@@ -1,4 +1,6 @@
-import {UserController} from './controllers/UserController';
+import { Db } from 'mongodb';
+import { UserController } from './controller/user-controller';
+import { MongoUserService } from './service/mongo-user-service';
 
 export interface ApplicationContext {
   userController: UserController;
