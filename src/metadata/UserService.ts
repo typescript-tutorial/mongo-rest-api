@@ -1,5 +1,10 @@
-import {User} from '../models/User';
-
+export interface User {
+  id: string;
+  username: string;
+  email?: string;
+  phone?: string;
+  dateOfBirth?: Date;
+}
 export interface UserService {
   all(): Promise<User[]>;
   load(id: string): Promise<User>;
